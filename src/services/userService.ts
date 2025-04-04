@@ -39,6 +39,19 @@ export interface LoginResponse {
   };
 }
 
+export interface RefreshTokenRequest {
+  token: string;
+}
+
+export interface RefreshTokenResponse {
+  code: number;
+  msg: string;
+  traceid: string;
+  data: {
+    token: string;
+  };
+}
+
 export const userService = {
   register: async (userData: RegisterRequest): Promise<RegisterResponse> => {
     const response = await apiClient.post<RegisterResponse>('/api/auth/v1/register', userData);
@@ -47,6 +60,11 @@ export const userService = {
   
   login: async (loginData: LoginRequest): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/api/auth/v1/login', loginData);
+    return response.data;
+  },
+
+  refreshToken: async (token: string): Promise<RefreshTokenResponse> => {
+    const response = await apiClient.post<RefreshTokenResponse>('/api/auth/v1/refresh', { token });
     return response.data;
   },
 };

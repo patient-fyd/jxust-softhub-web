@@ -71,6 +71,32 @@ export const useUserStore = defineStore('user', () => {
     }
   };
 
+  // 刷新Token
+  const refreshToken = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, error: '没有可用的token' };
+    
+    try {
+      const response = await userService.refreshToken(token);
+      
+      if (response.code === 0 && response.data.token) {
+        // 更新token
+        localStorage.setItem('token', response.data.token);
+        return { success: true };
+      } else {
+        error.value = response.msg || 'Token刷新失败';
+        return { success: false, error: error.value };
+      }
+    } catch (e: any) {
+      error.value = e.response?.data?.msg || 'Token刷新失败，请重新登录';
+      // 如果刷新失败，可能需要重新登录
+      if (e.response?.status === 401) {
+        logout();
+      }
+      return { success: false, error: error.value };
+    }
+  };
+
   // 登出
   const logout = () => {
     currentUser.value = null;
@@ -87,6 +113,7 @@ export const useUserStore = defineStore('user', () => {
     error,
     register,
     login,
-    logout
+    logout,
+    refreshToken
   };
 });
