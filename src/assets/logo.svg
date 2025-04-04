@@ -1,0 +1,17 @@
+<svg width="160" height="40" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景透明 -->
+  <g fill="none" stroke="none">
+    <!-- 图标部分 -->
+    <circle cx="40" cy="40" r="30" fill="#4785ff"/>
+    <path d="M40 20 A20 20 0 0 1 60 40 A20 20 0 0 1 40 60 A20 20 0 0 1 20 40 A20 20 0 0 1 40 20Z" fill="white"/>
+    <path d="M40 27 L40 53 M27 40 L53 40" stroke="#4785ff" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- 文字部分 -->
+    <text x="85" y="48" font-size="24" font-family="Arial, sans-serif" fill="#1e40af" font-weight="bold">
+      JXUST SoftHub
+    </text>
+    <text x="85" y="68" font-size="12" font-family="Arial, sans-serif" fill="#666">
+      软件协会
+    </text>
+  </g>
+</svg>

@@ -1,5 +1,162 @@
-# Vue 3 + TypeScript + Vite
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+# jxust-softhub-web
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+江西应用科技学院软件协会官网前端项目
+
+---
+
+## 📌 项目介绍
+
+`jxust-softhub-web` 是江西应用科技学院软件协会对外的官方网站前端项目，旨在为协会成员、师生及访客提供协会资讯、活动信息、资源下载、成员展示等服务，建设一个专业、活跃、实用的技术交流平台。
+
+官网具备丰富的内容展示、用户交互、与后端系统的深度集成，支持未来与 OJ 系统、搜索引擎、用户系统等的无缝对接。
+
+---
+
+## 🛠 技术栈
+
+- **开发框架**：Vue3
+- **路由管理**：Vue Router
+- **状态管理**：Pinia
+- **HTTP请求**：Axios
+- **富文本**：Markdown 渲染
+- **图表**：ECharts（后续可选）
+- **构建工具**：Vite
+
+---
+
+## ✅ 功能需求清单（官网前端）
+
+### MVP 阶段
+
+#### 1. 官网首页
+- 协会简介（标语、使命、愿景）
+- 轮播图（活动、公告、成果）
+- 最新动态（新闻置顶）
+- 快速入口（加入协会、OJ系统、资源库、活动报名）
+
+#### 2. 新闻动态
+- 新闻分类（协会新闻、技术分享、赛事通知）
+- 新闻详情（支持 Markdown 富文本）
+- 新闻分页、时间线展示
+- 新闻搜索（接入后端搜索接口）
+
+#### 3. 活动展示与报名
+- 活动列表（时间、地点、状态）
+- 活动详情（图文介绍）
+- 在线报名（姓名、学号、联系方式）
+- 活动状态（未开始 / 进行中 / 已结束）
+
+#### 4. 成员展示
+- 成员列表（姓名、届别、技术方向、头像）
+- 届别筛选
+- 核心成员标识（主席团、技术骨干）
+
+#### 5. 项目展示
+- OJ 系统、搜索引擎入口
+- 项目列表（名称、简介、技术栈）
+
+#### 6. 加入协会
+- 在线申请表单
+- 入会申请进度查询
+
+#### 7. 资源下载
+- 技术资料分类展示
+- 文件上传（管理员操作）
+- 文件下载（普通用户访问）
+
+#### 8. 联系我们
+- 联系方式展示
+- 在线留言表单
+
+---
+
+## 🔄 后续功能（第一、二、三次迭代）
+
+#### 官网互动增强
+- 用户注册 / 登录
+- 新闻、活动评论功能
+- 私信功能
+- 通知中心（审核、提醒等）
+- SEO 优化
+
+#### 学习与资料扩展
+- 资源标签管理
+- OJ系统题目、成绩、排行榜展示
+- 视频教程（技术分享）
+- 搜索结果整合
+
+#### 用户体验提升
+- 个人中心（资料、收藏、历史）
+- 响应式支持（PC + Mobile）
+- 多语言支持（中英）
+- 社区模块（用户投稿、讨论）
+
+---
+
+## 🪄 分支管理规范（Gitflow）
+
+| 分支 | 作用 |
+|------|------|
+| main | 线上部署分支 |
+| develop | 日常开发分支 |
+| feature/* | 功能开发分支 |
+| fix/* | bug 修复分支 |
+| hotfix/* | 线上紧急修复 |
+| release/* | 版本发布 |
+
+---
+
+## ✅ commit 规范
+
+| 类型 | 说明 |
+|------|------|
+| feat | 新增功能 |
+| fix | 修复 Bug |
+| refactor | 重构（无新功能或修复） |
+| style | 样式修改（空格、格式化） |
+| chore | 构建/配置/依赖变更 |
+| docs | 文档更新 |
+| test | 测试相关代码 |
+
+### commit 示例
+```bash
+feat: 完成活动报名表单功能
+fix: 修复新闻详情页富文本渲染问题
+docs: 添加项目开发规范
+```
+
+---
+
+## ✨ 项目启动
+
+```bash
+# 安装依赖
+npm install
+
+# 开发环境
+npm run dev
+
+# 构建
+npm run build
+
+# 预览
+npm run preview
+```
+
+---
+
+## 🏷 推荐
+
+- 所有接口遵循后端提供的 RESTful API
+- 所有页面需要考虑移动端适配
+- 与后端统一接口规范、状态码、错误提示
+
+---
+
+是否需要我接下来再帮你继续出：
+1. ✅ `jxust-softhub-admin`（后台管理系统专用 README）  
+2. ✅ `jxust-softhub-api`（后端 GoFrame2 API 专用 README）  
+3. ✅ 全项目贡献指南 `CONTRIBUTING.md`  
+
+如果需要，直接回复【继续】我就一套帮你搞全。这样你项目就直接成套能用了。
