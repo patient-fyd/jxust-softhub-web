@@ -3,7 +3,41 @@
     <h1 class="page-title">加入我们</h1>
     <p class="page-subtitle">成为软件协会的一员，开启你的技术之旅</p>
     
-    <div class="join-content">
+    <div v-if="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>加载中，请稍候...</p>
+    </div>
+    
+    <!-- 已是会员的提示 -->
+    <div v-else-if="isMember" class="member-notice">
+      <div class="icon-check">✓</div>
+      <h3>你已是协会会员</h3>
+      <p>感谢你加入软件协会大家庭，请前往个人中心查看会员权益。</p>
+      <router-link to="/profile" class="btn-primary">前往个人中心</router-link>
+    </div>
+    
+    <!-- 已提交申请的提示 -->
+    <div v-else-if="hasApplied" class="application-status">
+      <div v-if="isPending" class="icon-pending">⏳</div>
+      <div v-else-if="isApproved" class="icon-check">✓</div>
+      <div v-else-if="isRejected" class="icon-rejected">✗</div>
+      
+      <h3 v-if="isPending">申请正在审核中</h3>
+      <h3 v-else-if="isApproved">申请已通过</h3>
+      <h3 v-else-if="isRejected">申请未通过</h3>
+      
+      <p v-if="isPending">你的入会申请已提交成功，正在等待管理员审核，请耐心等待。</p>
+      <p v-else-if="isApproved">恭喜！你的入会申请已通过审核，欢迎加入软件协会大家庭。</p>
+      <p v-else-if="isRejected">很遗憾，你的入会申请未通过审核，请查看详情了解原因。</p>
+      
+      <router-link to="/join/application-status" class="btn-primary">查看申请详情</router-link>
+      
+      <div v-if="isRejected" class="reapply-link">
+        <button @click="enableReapply" class="btn-secondary">重新申请</button>
+      </div>
+    </div>
+    
+    <div v-else-if="showApplicationForm" class="join-content">
       <div v-if="successMessage" class="success-message">
         <div class="icon-check">✓</div>
         <h3>申请提交成功！</h3>
@@ -145,14 +179,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, ref } from 'vue';
+import { defineComponent, reactive, ref, computed, onMounted } from 'vue';
 import { submitJoinApplication } from '../services/joinService';
 import { JoinApplicationForm } from '../types/join';
 import { collegeOptions, departmentOptions, gradeOptions } from '../types/join';
+import { useUserStore } from '../stores/userStore';
+import { useJoinStore } from '../stores/joinStore';
 
 export default defineComponent({
   name: 'JoinView',
   setup() {
+    const userStore = useUserStore();
+    const joinStore = useJoinStore();
+    
     const initialFormState: JoinApplicationForm = {
       name: '',
       studentId: '',
@@ -169,6 +208,32 @@ export default defineComponent({
     const formData = reactive<JoinApplicationForm>({...initialFormState});
     const isSubmitting = ref(false);
     const successMessage = ref('');
+    const isLoading = ref(true);
+    const showApplicationForm = ref(true);
+    
+    // 计算属性
+    const isMember = computed(() => joinStore.isMember);
+    const hasApplied = computed(() => joinStore.hasApplied);
+    const isPending = computed(() => joinStore.isPending);
+    const isApproved = computed(() => joinStore.isApproved);
+    const isRejected = computed(() => joinStore.isRejected);
+    
+    // 初始化
+    onMounted(async () => {
+      if (userStore.currentUser) {
+        await joinStore.fetchApplicationStatus();
+        
+        // 预填充用户信息
+        if (userStore.currentUser.name) {
+          formData.name = userStore.currentUser.name;
+        }
+      }
+      
+      isLoading.value = false;
+      
+      // 根据申请状态显示表单
+      showApplicationForm.value = !joinStore.hasApplied && !joinStore.isMember;
+    });
     
     const submitApplication = async () => {
       try {
@@ -177,6 +242,8 @@ export default defineComponent({
         
         if (response.code === 0) {
           successMessage.value = `申请已成功提交，你的申请ID为：${response.data.applicationId}。我们将尽快处理你的申请，请关注站内通知或邮件提醒。`;
+          // 更新申请状态
+          await joinStore.fetchApplicationStatus();
         } else {
           alert(`提交失败：${response.msg || '未知错误'}`);
         }
@@ -193,12 +260,26 @@ export default defineComponent({
       successMessage.value = '';
     };
     
+    // 重新申请功能（被拒绝后）
+    const enableReapply = async () => {
+      showApplicationForm.value = true;
+      await joinStore.reset();
+    };
+    
     return {
       formData,
       isSubmitting,
       successMessage,
+      isLoading,
+      showApplicationForm,
+      isMember,
+      hasApplied,
+      isPending,
+      isApproved,
+      isRejected,
       submitApplication,
       resetForm,
+      enableReapply,
       collegeOptions,
       departmentOptions,
       gradeOptions
@@ -297,6 +378,9 @@ input:focus, select:focus, textarea:focus {
   cursor: pointer;
   transition: all 0.3s;
   border: none;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
 }
 
 .btn-primary {
@@ -322,32 +406,53 @@ input:focus, select:focus, textarea:focus {
   background-color: #d1d5db;
 }
 
-.success-message {
+.success-message, .member-notice, .application-status {
   text-align: center;
-  padding: 30px;
+  padding: 50px 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.icon-check {
+.icon-check, .icon-pending, .icon-rejected {
   width: 60px;
   height: 60px;
-  background-color: #10b981;
-  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
   margin-bottom: 10px;
+  color: white;
 }
 
-.success-message h3 {
+.icon-check {
+  background-color: #10b981;
+}
+
+.icon-pending {
+  background-color: #f59e0b;
+}
+
+.icon-rejected {
+  background-color: #ef4444;
+}
+
+.success-message h3, .member-notice h3, .application-status h3 {
   font-size: 1.5rem;
-  color: #10b981;
   margin: 10px 0;
+}
+
+.success-message h3, .member-notice h3 {
+  color: #10b981;
+}
+
+.application-status h3 {
+  color: #1e40af;
 }
 
 .check-status-link {
@@ -357,14 +462,44 @@ input:focus, select:focus, textarea:focus {
   border-top: 1px solid #e5e7eb;
 }
 
-.check-status-link a {
+.check-status-link a, .reapply-link a {
   color: #1e40af;
   text-decoration: none;
   font-weight: 500;
 }
 
-.check-status-link a:hover {
+.check-status-link a:hover, .reapply-link a:hover {
   text-decoration: underline;
+}
+
+.reapply-link {
+  margin-top: 20px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #1e40af;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {

@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import NavBar from './components/NavBar.vue'
 import Footer from './components/Footer.vue'
+import { onMounted } from 'vue'
+import { useUserStore } from './stores/userStore'
+import { useJoinStore } from './stores/joinStore'
+
+const userStore = useUserStore()
+const joinStore = useJoinStore()
+
+onMounted(async () => {
+  // 如果用户已登录，则加载其加入申请状态
+  if (userStore.currentUser) {
+    await joinStore.fetchApplicationStatus()
+  }
+})
 </script>
 
 <template>

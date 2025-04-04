@@ -11,6 +11,13 @@
         </router-link>
       </div>
       
+      <div v-else-if="isMember && applications.length === 0" class="member-notice">
+        <div class="icon-check">✓</div>
+        <h3>你已是协会会员</h3>
+        <p>感谢你加入软件协会大家庭，请前往个人中心查看会员权益。</p>
+        <router-link to="/profile" class="btn-primary">前往个人中心</router-link>
+      </div>
+      
       <div v-else-if="isLoading" class="loading">
         <div class="loading-spinner"></div>
         <p>加载中，请稍候...</p>
@@ -201,11 +208,17 @@
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import { getJoinApplicationList, getJoinApplicationDetail } from '../services/joinService';
 import { JoinApplicationDetail } from '../types/join';
+import { useUserStore } from '../stores/userStore';
+import { useJoinStore } from '../stores/joinStore';
 
 export default defineComponent({
   name: 'JoinApplicationStatus',
   setup() {
-    const isLoggedIn = computed(() => !!localStorage.getItem('token'));
+    const userStore = useUserStore();
+    const joinStore = useJoinStore();
+    
+    const isLoggedIn = computed(() => !!userStore.currentUser);
+    const isMember = computed(() => joinStore.isMember);
     const isLoading = ref(false);
     const error = ref('');
     const applications = ref<JoinApplicationDetail[]>([]);
@@ -297,11 +310,13 @@ export default defineComponent({
     onMounted(() => {
       if (isLoggedIn.value) {
         fetchApplications();
+        joinStore.fetchApplicationStatus();
       }
     });
     
     return {
       isLoggedIn,
+      isMember,
       isLoading,
       error,
       applications,
@@ -414,6 +429,34 @@ export default defineComponent({
   font-size: 2rem;
   margin-bottom: 10px;
   font-weight: bold;
+}
+
+.icon-check {
+  width: 60px;
+  height: 60px;
+  background-color: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.member-notice {
+  text-align: center;
+  padding: 50px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.member-notice h3 {
+  font-size: 1.5rem;
+  color: #10b981;
+  margin: 10px 0;
 }
 
 .application-list {

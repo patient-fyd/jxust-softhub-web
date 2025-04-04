@@ -47,4 +47,44 @@ export const getJoinApplicationDetail = async (applicationId: number) => {
     params: { applicationId }
   });
   return response.data;
+};
+
+/**
+ * 检查当前用户是否已经提交过申请
+ * @returns 返回申请状态，如果没有申请过则返回null
+ */
+export const checkUserApplicationStatus = async () => {
+  try {
+    const response = await getJoinApplicationList({
+      pageSize: 1,  // 只需要最近的一条记录
+      pageNum: 1
+    });
+    
+    if (response.code === 0 && response.data.list.length > 0) {
+      const application = response.data.list[0];
+      return {
+        hasApplied: true,
+        applicationId: application.applicationId,
+        status: application.status,
+        statusText: getStatusTextByCode(application.status)
+      };
+    } else {
+      return { hasApplied: false };
+    }
+  } catch (error) {
+    console.error('检查申请状态出错:', error);
+    return { hasApplied: false, error: '检查申请状态出错' };
+  }
+};
+
+/**
+ * 根据状态码获取状态文本
+ */
+export const getStatusTextByCode = (status: number): string => {
+  switch (status) {
+    case 0: return '待审核';
+    case 1: return '已通过';
+    case 2: return '已拒绝';
+    default: return '未知状态';
+  }
 }; 
