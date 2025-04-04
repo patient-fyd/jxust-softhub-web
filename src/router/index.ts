@@ -44,6 +44,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Join.vue')
   },
   {
+    path: '/join/application-status',
+    name: 'JoinApplicationStatus',
+    component: () => import('../views/JoinApplicationStatus.vue')
+  },
+  {
     path: '/register',
     name: 'Register',
     component: () => import('../views/Register.vue')
