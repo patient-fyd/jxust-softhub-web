@@ -302,7 +302,7 @@ export default defineComponent({
 }
 
 .post-button:hover {
-    background-color: #2563eb;
+    background-color: #1e40af;
 }
 
 /* 个人主页按钮样式 */

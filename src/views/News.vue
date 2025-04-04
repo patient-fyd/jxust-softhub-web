@@ -70,13 +70,12 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { newsService, type News } from '../services/newsService';
 
 export default defineComponent({
   name: 'NewsView',
   setup() {
-    const router = useRouter();
     const route = useRoute();
     
     // 新闻类别

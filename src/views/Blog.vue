@@ -79,13 +79,12 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { newsService, type News } from '../services/newsService';
 
 export default defineComponent({
   name: 'BlogView',
   setup() {
-    const router = useRouter();
     const route = useRoute();
     
     const blogs = ref<News[]>([]);
