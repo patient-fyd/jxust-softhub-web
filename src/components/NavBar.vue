@@ -32,19 +32,30 @@
         </button>
       </div>
       <button class="post-button">创作中心 ▾</button>
-      <div class="auth-buttons combined-auth">
+      <!-- 根据登录状态显示不同的按钮 -->
+      <div v-if="!isLoggedIn" class="auth-buttons combined-auth">
         <span class="auth-part" @click="$router.push('/login')">登录</span>
         <span class="divider">|</span>
         <span class="auth-part" @click="$router.push('/register')">注册</span>
+      </div>
+      <div v-else class="user-profile">
+        <button class="profile-button" @click="$router.push('/profile')">
+          <Icon icon="mdi:account-circle" width="20" height="20" />
+          <span>{{ currentUser?.name || '个人主页' }}</span>
+        </button>
+        <button class="logout-button" @click="handleLogout">
+          <Icon icon="mdi:logout" width="16" height="16" />
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Icon } from '@iconify/vue';
+import { useUserStore } from '../stores/userStore';
 
 export default defineComponent({
   name: 'NavBar',
@@ -53,8 +64,12 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
+    const userStore = useUserStore();
     const searchKeyword = ref('');
     const isSearchFocused = ref(false);
+
+    // 计算属性：判断用户是否已登录
+    const isLoggedIn = computed(() => !!userStore.currentUser);
 
     const handleSearch = () => {
       if (searchKeyword.value.trim()) {
@@ -62,10 +77,19 @@ export default defineComponent({
       }
     };
 
+    // 处理登出
+    const handleLogout = () => {
+      userStore.logout();
+      router.push('/');
+    };
+
     return {
       searchKeyword,
       handleSearch,
-      isSearchFocused
+      isSearchFocused,
+      isLoggedIn,
+      currentUser: computed(() => userStore.currentUser),
+      handleLogout
     };
   },
 });
@@ -281,6 +305,49 @@ export default defineComponent({
     background-color: #2563eb;
 }
 
+/* 个人主页按钮样式 */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background-color: rgba(71,133,255,1);
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.profile-button:hover {
+  background-color: #1e40af;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #e5e7eb;
+}
+
 /* 响应式布局 */
 @media (max-width: 1440px) {
   .page {
@@ -328,6 +395,20 @@ export default defineComponent({
 
   .post-button {
     width: 100%;
+  }
+  
+  .user-profile {
+    width: 100%;
+    justify-content: space-between;
+    margin: 10px 0;
+  }
+  
+  .profile-button {
+    flex: 1;
+  }
+  
+  .logout-button {
+    margin-left: 8px;
   }
 }
 </style>
