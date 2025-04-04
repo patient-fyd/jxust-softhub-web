@@ -7,10 +7,13 @@
       </div>
       <div class="login-container">
         <h1>登录账户</h1>
+        <div v-if="loginError" class="error-message">
+          {{ loginError }}
+        </div>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="username">邮箱</label>
-            <input type="text" id="username" v-model="username" placeholder="请输入邮箱" required />
+            <label for="username">用户名</label>
+            <input type="text" id="username" v-model="username" placeholder="请输入用户名" required />
           </div>
           <div class="form-group">
             <label for="password">密码</label>
@@ -20,7 +23,7 @@
             <label><input type="checkbox" /> 记住我</label>
             <router-link to="/forgot-password" class="forgot-link">忘记密码？</router-link>
           </div>
-          <button type="submit">登录</button>
+          <button type="submit" :disabled="isLoading">{{ isLoading ? '登录中...' : '登录' }}</button>
           <p class="signup-text">
             还没有账户？ <router-link to="/register" class="signup-link">立即注册</router-link>
           </p>
@@ -31,21 +34,61 @@
   
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { useUserStore } from '../stores/userStore';
   
   export default defineComponent({
     name: 'Login',
     setup() {
+      const router = useRouter();
+      const userStore = useUserStore();
       const username = ref('');
       const password = ref('');
+      const isLoading = ref(false);
+      const loginError = ref('');
   
-      const handleLogin = () => {
-        // 登录逻辑
+      const handleLogin = async () => {
+        loginError.value = '';
+        if (!username.value.trim() || !password.value.trim()) {
+          loginError.value = '请输入用户名和密码';
+          return;
+        }
+        
+        isLoading.value = true;
+        try {
+          const result = await userStore.login({
+            userName: username.value,
+            password: password.value
+          });
+          
+          if (result.success) {
+            // 登录成功，跳转到首页
+            router.push('/');
+          } else {
+            loginError.value = result.error || '登录失败，请检查用户名和密码';
+          }
+        } catch (error: any) {
+          loginError.value = error.message || '登录过程中发生错误';
+        } finally {
+          isLoading.value = false;
+        }
       };
   
-      return { username, password, handleLogin };
+      return { username, password, handleLogin, isLoading, loginError };
     },
   });
   </script>
+  
+  <style>
+  .error-message {
+    background-color: #ffebee;
+    color: #d32f2f;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  </style>
   
   <style scoped>
   .page-container {

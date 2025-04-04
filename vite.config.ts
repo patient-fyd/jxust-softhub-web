@@ -18,6 +18,13 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   build: {
     assetsInlineLimit: 10240, // 10KB
