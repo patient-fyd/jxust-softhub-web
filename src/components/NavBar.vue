@@ -13,7 +13,7 @@
         <router-link to="/news" class="nav-item">新闻动态</router-link>
         <router-link to="/activities" class="nav-item">活动展示</router-link>
         <router-link to="/members" class="nav-item">成员展示</router-link>
-        <router-link to="/join" class="nav-item">加入我们</router-link>
+        <router-link to="/resources" class="nav-item">资源中心</router-link>
       </div>
     </div>
     <div class="actions">

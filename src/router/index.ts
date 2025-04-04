@@ -13,6 +13,17 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/News.vue')
   },
   {
+    path: '/blog',
+    name: 'Blog',
+    redirect: '/news?category=技术分享&from=blog'
+  },
+  {
+    path: '/news/:id',
+    name: 'NewsDetail',
+    component: () => import('../views/News.vue'),
+    props: true
+  },
+  {
     path: '/activities',
     name: 'Activities',
     component: () => import('../views/Activities.vue')
@@ -21,6 +32,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/members',
     name: 'Members',
     component: () => import('../views/Members.vue')
+  },
+  {
+    path: '/resources',
+    name: 'Resources',
+    component: () => import('../views/News.vue') // 暂时使用News组件，后续可以创建专门的Resources组件
   },
   {
     path: '/join',
