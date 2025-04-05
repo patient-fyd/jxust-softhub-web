@@ -11,8 +11,8 @@
       <div class="container">
         <router-link to="/" class="nav-item">首页</router-link>
         <router-link to="/news" class="nav-item">新闻动态</router-link>
-        <router-link to="/activities" class="nav-item">活动展示</router-link>
-        <router-link to="/members" class="nav-item">成员展示</router-link>
+        <router-link to="/moments" class="nav-item">日常动态</router-link>
+        <router-link to="/practice" class="nav-item">在线刷题</router-link>
         <router-link to="/resources" class="nav-item">资源中心</router-link>
       </div>
     </div>
@@ -31,7 +31,23 @@
           <Icon icon="mdi:search" width="20" height="20" />
         </button>
       </div>
-      <button class="post-button">创作中心 ▾</button>
+      <div class="create-dropdown">
+        <button class="post-button" @click="toggleCreateMenu">创作中心 ▾</button>
+        <div class="dropdown-menu" v-if="showCreateMenu">
+          <div class="dropdown-item" @click="navigateTo('/publish-moment')">
+            <Icon icon="mdi:comment-text-outline" width="18" height="18" />
+            <span>发布沸点</span>
+          </div>
+          <div class="dropdown-item" @click="navigateTo('/publish-article')">
+            <Icon icon="mdi:file-document-outline" width="18" height="18" />
+            <span>写文章</span>
+          </div>
+          <div class="dropdown-item" @click="navigateTo('/create-resource')">
+            <Icon icon="mdi:folder-outline" width="18" height="18" />
+            <span>分享资源</span>
+          </div>
+        </div>
+      </div>
       <!-- 根据登录状态显示不同的按钮 -->
       <div v-if="!isLoggedIn" class="auth-buttons combined-auth">
         <span class="auth-part" @click="$router.push('/login')">登录</span>
@@ -52,7 +68,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { Icon } from '@iconify/vue';
 import { useUserStore } from '../stores/userStore';
@@ -67,6 +83,7 @@ export default defineComponent({
     const userStore = useUserStore();
     const searchKeyword = ref('');
     const isSearchFocused = ref(false);
+    const showCreateMenu = ref(false);
 
     // 计算属性：判断用户是否已登录
     const isLoggedIn = computed(() => !!userStore.currentUser);
@@ -82,6 +99,33 @@ export default defineComponent({
       userStore.logout();
       router.push('/');
     };
+    
+    // 切换创作中心菜单
+    const toggleCreateMenu = () => {
+      showCreateMenu.value = !showCreateMenu.value;
+    };
+    
+    // 导航到指定路径
+    const navigateTo = (path: string) => {
+      router.push(path);
+      showCreateMenu.value = false;
+    };
+    
+    // 点击外部区域关闭下拉菜单
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.create-dropdown')) {
+        showCreateMenu.value = false;
+      }
+    };
+    
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside);
+    });
+    
+    onBeforeUnmount(() => {
+      document.removeEventListener('click', handleClickOutside);
+    });
 
     return {
       searchKeyword,
@@ -89,7 +133,10 @@ export default defineComponent({
       isSearchFocused,
       isLoggedIn,
       currentUser: computed(() => userStore.currentUser),
-      handleLogout
+      handleLogout,
+      showCreateMenu,
+      toggleCreateMenu,
+      navigateTo
     };
   },
 });
@@ -410,5 +457,43 @@ export default defineComponent({
   .logout-button {
     margin-left: 8px;
   }
+}
+
+/* 创作中心下拉菜单样式 */
+.create-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 160px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 100;
+  margin-top: 5px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1677ff;
+}
+
+.dropdown-item i, .dropdown-item svg {
+  color: #666;
 }
 </style>

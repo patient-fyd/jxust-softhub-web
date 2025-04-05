@@ -34,6 +34,16 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Members.vue')
   },
   {
+    path: '/moments',
+    name: 'Moments',
+    component: () => import('../views/Moments.vue')
+  },
+  {
+    path: '/publish-moment',
+    name: 'PublishMoment',
+    component: () => import('../views/PublishMoment.vue')
+  },
+  {
     path: '/resources',
     name: 'Resources',
     component: () => import('../views/News.vue') // 暂时使用News组件，后续可以创建专门的Resources组件
@@ -67,6 +77,17 @@ const routes: Array<RouteRecordRaw> = [
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/Profile.vue')
+  },
+  {
+    path: '/practice',
+    name: 'Practice',
+    component: () => import('../views/Practice.vue')
+  },
+  {
+    path: '/practice/problem/:id',
+    name: 'ProblemDetail',
+    component: () => import('../views/ProblemDetail.vue'),
+    props: true
   }
 ]
 
