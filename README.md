@@ -168,10 +168,3 @@ npm run preview
 - 与后端统一接口规范、状态码、错误提示
 
 ---
-
-是否需要我接下来再帮你继续出：
-1. ✅ `jxust-softhub-admin`（后台管理系统专用 README）  
-2. ✅ `jxust-softhub-api`（后端 GoFrame2 API 专用 README）  
-3. ✅ 全项目贡献指南 `CONTRIBUTING.md`  
-
-如果需要，直接回复【继续】我就一套帮你搞全。这样你项目就直接成套能用了。
