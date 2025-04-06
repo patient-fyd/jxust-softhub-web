@@ -1,6 +1,5 @@
 <template>
   <div class="moments-page">
-    <h2 class="moments-title">动态广场</h2>
     <div class="moments-container">
       <div v-if="loading" class="loading">加载中...</div>
       <div v-else class="moments-layout">
