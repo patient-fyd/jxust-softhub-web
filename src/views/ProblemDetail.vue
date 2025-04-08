@@ -173,8 +173,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue';
+import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { Problem, problemService } from '../services/ProblemService';
 
 export default defineComponent({
   name: 'ProblemDetailView',
@@ -188,6 +189,7 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const problemId = computed(() => props.id || route.params.id);
+    const loading = ref(true);
     
     // 代码相关状态
     const selectedLanguage = ref('javascript');
@@ -203,6 +205,15 @@ export default defineComponent({
       passed: boolean;
     }[]>([]);
     
+    // 题目数据
+    const problem = ref<Problem>({
+      id: '',
+      title: '',
+      difficulty: 'easy',
+      tags: [],
+      status: 'unsolved'
+    });
+    
     // 可用编程语言
     const availableLanguages = [
       { label: 'JavaScript', value: 'javascript' },
@@ -210,38 +221,6 @@ export default defineComponent({
       { label: 'Java', value: 'java' },
       { label: 'C++', value: 'cpp' }
     ];
-    
-    // 示例题目数据
-    const problem = ref({
-      id: 1,
-      title: '两数之和',
-      difficulty: 'easy',
-      tags: ['数组', '哈希表'],
-      description: `<p>给定一个整数数组 <code>nums</code> 和一个整数目标值 <code>target</code>，请你在该数组中找出 <strong>和为目标值</strong> <code>target</code> 的那 <strong>两个</strong> 整数，并返回它们的数组下标。</p>
-        <p>你可以假设每种输入只会对应一个答案。但是，数组中同一个元素在答案里不能重复出现。</p>
-        <p>你可以按任意顺序返回答案。</p>`,
-      examples: [
-        {
-          input: 'nums = [2,7,11,15], target = 9',
-          output: '[0,1]',
-          explanation: '因为 nums[0] + nums[1] == 9 ，返回 [0, 1] 。'
-        },
-        {
-          input: 'nums = [3,2,4], target = 6',
-          output: '[1,2]'
-        },
-        {
-          input: 'nums = [3,3], target = 6',
-          output: '[0,1]'
-        }
-      ],
-      constraints: [
-        '2 <= nums.length <= 10^4',
-        '-10^9 <= nums[i] <= 10^9',
-        '-10^9 <= target <= 10^9',
-        '只会存在一个有效答案'
-      ]
-    });
     
     // 示例代码模板
     const codeTemplates = {
@@ -273,6 +252,20 @@ public:
 };`
     };
     
+    // 获取题目数据
+    const fetchProblemDetail = async () => {
+      if (!problemId.value) return;
+      
+      loading.value = true;
+      try {
+        problem.value = await problemService.getProblemDetail(problemId.value as string);
+      } catch (error) {
+        console.error('获取题目详情失败', error);
+      } finally {
+        loading.value = false;
+      }
+    };
+    
     // 获取难度标签
     const getDifficultyLabel = (difficulty: string): string => {
       switch (difficulty) {
@@ -294,84 +287,78 @@ public:
     };
     
     // 运行代码
-    const runCode = () => {
-      if (isCodeRunning.value) return;
+    const runCode = async () => {
+      if (isCodeRunning.value || !problemId.value) return;
       
       isCodeRunning.value = true;
       consoleOutput.value = '';
       testCases.value = [];
       
-      // 模拟代码执行
-      setTimeout(() => {
-        consoleOutput.value = `> 正在执行测试用例...\n> 执行测试用例 1: nums = [2,7,11,15], target = 9\n> 输出: [0,1]\n> 执行测试用例 2: nums = [3,2,4], target = 6\n> 输出: [1,2]\n> 测试完成，2 个测试用例通过， 0 个测试用例失败`;
+      try {
+        const result = await problemService.runCode(
+          problemId.value as string,
+          selectedLanguage.value,
+          code.value
+        );
         
-        // 设置测试用例结果
-        testCases.value = [
-          {
-            input: 'nums = [2,7,11,15], target = 9',
-            expected: '[0,1]',
-            actual: '[0,1]',
-            passed: true
-          },
-          {
-            input: 'nums = [3,2,4], target = 6',
-            expected: '[1,2]',
-            actual: '[1,2]',
-            passed: true
-          }
-        ];
+        consoleOutput.value = result.output;
+        testCases.value = result.testCases;
         
+        // 自动切换到测试用例标签页
+        if (result.testCases.length > 0) {
+          activeTab.value = 'testcases';
+        }
+      } catch (error) {
+        console.error('运行代码失败', error);
+        consoleOutput.value = '运行代码时发生错误，请稍后再试';
+      } finally {
         isCodeRunning.value = false;
-      }, 1500);
+      }
     };
     
     // 提交解答
-    const submitSolution = () => {
-      if (isSubmitting.value) return;
+    const submitSolution = async () => {
+      if (isSubmitting.value || !problemId.value) return;
       
       isSubmitting.value = true;
+      consoleOutput.value = '';
       
-      // 模拟提交
-      setTimeout(() => {
-        consoleOutput.value = `> 提交成功！\n> 执行用时: 72 ms, 内存消耗: 41.5 MB\n> 你的解答已通过所有测试用例`;
-        testCases.value = [
-          {
-            input: 'nums = [2,7,11,15], target = 9',
-            expected: '[0,1]',
-            actual: '[0,1]',
-            passed: true
-          },
-          {
-            input: 'nums = [3,2,4], target = 6',
-            expected: '[1,2]',
-            actual: '[1,2]',
-            passed: true
-          },
-          {
-            input: 'nums = [3,3], target = 6',
-            expected: '[0,1]',
-            actual: '[0,1]',
-            passed: true
-          },
-          {
-            input: 'nums = [1,2,3,4,5], target = 6',
-            expected: '[1,3]',
-            actual: '[1,3]',
-            passed: true
-          }
-        ];
+      try {
+        const result = await problemService.submitCode(
+          problemId.value as string,
+          selectedLanguage.value,
+          code.value
+        );
         
+        consoleOutput.value = `> 提交成功！\n> 执行用时: ${result.runtime} ms, 内存消耗: ${result.memory} MB\n> 你的解答已通过所有测试用例`;
+        testCases.value = result.testCases;
+        
+        // 自动切换到测试用例标签页
+        if (result.testCases.length > 0) {
+          activeTab.value = 'testcases';
+        }
+      } catch (error) {
+        console.error('提交代码失败', error);
+        consoleOutput.value = '提交代码时发生错误，请稍后再试';
+      } finally {
         isSubmitting.value = false;
-      }, 2000);
+      }
     };
     
-    // 组件挂载时设置初始代码
-    onMounted(() => {
+    // 监听语言变化重置代码
+    watch(selectedLanguage, () => {
       resetCode();
     });
     
+    // 监听题目ID变化
+    watch(problemId, () => {
+      fetchProblemDetail();
+      resetCode();
+    }, { immediate: true });
+    
     return {
       problem,
+      loading,
       selectedLanguage,
       availableLanguages,
       code,

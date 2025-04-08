@@ -8,6 +8,9 @@
         </div>
         <div class="publish-input" @click="expandPublishArea" v-if="!isPublishAreaExpanded">
           <span>分享你的见解、经验和想法...</span>
+          <span v-if="currentCircleName" class="current-circle">
+            #{{ currentCircleName }}#
+          </span>
         </div>
       </div>
       
@@ -38,7 +41,7 @@
 
         <div class="circle-selector" @click="showTopicSelector = !showTopicSelector">
           <i class="icon-circle"></i>
-          {{ selectedTopic ? `#${selectedTopic}#` : '请选择圈子' }} >
+          {{ topicDisplay }} >
         </div>
 
         <div class="word-count">{{ content.length }}/1000</div>
@@ -96,20 +99,42 @@
 
     <!-- 内容标签切换栏 -->
     <div class="content-tabs">
-      <div class="tab-item active">
+      <div 
+        class="tab-item" 
+        :class="{ 'active': activeTab === 'recommend' }"
+        @click="switchTab('recommend')"
+      >
         <span>推荐</span>
       </div>
-      <div class="tab-item">
+      <div 
+        class="tab-item" 
+        :class="{ 'active': activeTab === 'latest' }"
+        @click="switchTab('latest')"
+      >
         <span>最新</span>
       </div>
-      <div class="tab-item">
+      <div 
+        class="tab-item" 
+        :class="{ 'active': activeTab === 'hot' }"
+        @click="switchTab('hot')"
+      >
         <span>热门</span>
       </div>
     </div>
 
     <!-- 沸点内容列表 -->
     <div class="moment-list">
-      <div class="moment-item" v-for="(item, index) in momentItems" :key="index">
+      <div v-if="loading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <span>加载中...</span>
+      </div>
+      
+      <div v-else-if="filteredMoments.length === 0" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <span>还没有内容，成为第一个发布者吧！</span>
+      </div>
+      
+      <div v-else v-for="(item, index) in filteredMoments" :key="index" class="moment-item">
         <div class="moment-user">
           <div class="avatar">
             <img :src="item.avatar" alt="用户头像">
@@ -157,11 +182,24 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch, PropType } from 'vue';
+import { getCircleDetail } from '../../services/circleService';
 
 export default defineComponent({
   name: 'MomentContent',
-  setup() {
+  props: {
+    filter: {
+      type: Object as PropType<{
+        orderBy?: string;
+        circleId?: number;
+      }>,
+      default: () => ({
+        orderBy: 'latest',
+        circleId: 0
+      })
+    }
+  },
+  setup(props) {
     const isPublishAreaExpanded = ref(false);
     const content = ref('');
     const images = ref<{ id: string; url: string }[]>([]);
@@ -170,6 +208,9 @@ export default defineComponent({
     const isPublishing = ref(false);
     const textareaRef = ref<HTMLTextAreaElement | null>(null);
     const fileInputRef = ref<HTMLInputElement | null>(null);
+    const loading = ref(false);
+    const activeTab = ref('recommend');
+    const currentCircleName = ref('');
     
     const momentItems = ref([
       {
@@ -180,7 +221,8 @@ export default defineComponent({
         images: ['/image1.jpg', '/image2.jpg'],
         topic: 'Vue3学习',
         likes: 128,
-        comments: 32
+        comments: 32,
+        circleId: 1
       },
       {
         username: 'TypeScript爱好者',
@@ -190,7 +232,8 @@ export default defineComponent({
         images: [],
         topic: 'TypeScript',
         likes: 56,
-        comments: 18
+        comments: 18,
+        circleId: 2
       },
       {
         username: '程序员日常',
@@ -200,7 +243,30 @@ export default defineComponent({
         images: ['/image3.jpg'],
         topic: '程序员生活',
         likes: 299,
-        comments: 45
+        comments: 45,
+        circleId: 3
+      },
+      {
+        username: 'React学习者',
+        avatar: '/default-avatar.png',
+        time: '3天前',
+        content: 'React Hooks真是太强大了，今天学习了useCallback和useMemo，感觉豁然开朗！',
+        images: [],
+        topic: 'React',
+        likes: 120,
+        comments: 25,
+        circleId: 4
+      },
+      {
+        username: '算法爱好者',
+        avatar: '/default-avatar.png',
+        time: '4天前',
+        content: '今天解决了一道困难的动态规划题目，分享一下思路...',
+        images: ['/image4.jpg'],
+        topic: '算法',
+        likes: 88,
+        comments: 15,
+        circleId: 5
       }
     ]);
     
@@ -218,6 +284,77 @@ export default defineComponent({
       '算法学习',
       '开发工具'
     ]);
+    
+    // 获取当前圈子信息
+    const fetchCircleInfo = async () => {
+      if (props.filter.circleId && props.filter.circleId > 0) {
+        try {
+          const response = await getCircleDetail(props.filter.circleId);
+          if (response.code === 0) {
+            currentCircleName.value = response.data.name;
+          } else {
+            console.error('获取圈子信息失败:', response.msg);
+            currentCircleName.value = `圈子${props.filter.circleId}`;
+          }
+        } catch (err) {
+          console.error('获取圈子信息请求出错:', err);
+          currentCircleName.value = `圈子${props.filter.circleId}`;
+        }
+      } else {
+        currentCircleName.value = '';
+      }
+    };
+    
+    // 根据过滤器筛选动态
+    const filteredMoments = computed(() => {
+      let result = [...momentItems.value];
+      
+      // 按圈子筛选
+      if (props.filter.circleId && props.filter.circleId > 0) {
+        result = result.filter(item => item.circleId === props.filter.circleId);
+      }
+      
+      // 按排序方式筛选
+      if (activeTab.value) {
+        switch (activeTab.value) {
+          case 'hot':
+            // 热门排序：按点赞数降序
+            result.sort((a, b) => b.likes - a.likes);
+            break;
+          case 'latest':
+            // 最新排序：已经按时间排序，不需要额外处理
+            // 如果有实际时间戳，这里可以做排序
+            break;
+          case 'recommend':
+            // 推荐算法，这里模拟一个随机推荐
+            result.sort(() => Math.random() - 0.5);
+            break;
+        }
+      }
+      
+      return result;
+    });
+    
+    // 话题显示文本
+    const topicDisplay = computed(() => {
+      if (selectedTopic) {
+        return `#${selectedTopic}#`;
+      } else if (currentCircleName.value) {
+        return `#${currentCircleName.value}#`;
+      } else {
+        return '请选择圈子';
+      }
+    });
+    
+    // 切换标签
+    const switchTab = (tab: string) => {
+      activeTab.value = tab;
+      // 这里可以调用接口加载不同类型的数据
+      loading.value = true;
+      setTimeout(() => {
+        loading.value = false;
+      }, 500);
+    };
     
     // 判断是否可以发布
     const canPublish = computed(() => {
@@ -316,9 +453,10 @@ export default defineComponent({
           time: '刚刚',
           content: content.value,
           images: images.value.map((img) => img.url),
-          topic: selectedTopic.value,
+          topic: selectedTopic.value || (currentCircleName.value ? currentCircleName.value : ''),
           likes: 0,
-          comments: 0
+          comments: 0,
+          circleId: props.filter.circleId || 0
         };
         
         momentItems.value.unshift(newMoment);
@@ -333,6 +471,27 @@ export default defineComponent({
       }
     };
 
+    // 监听过滤器变化，加载对应圈子信息
+    watch(() => props.filter, (newFilter) => {
+      console.log('过滤器变更:', newFilter);
+      // 获取圈子信息
+      fetchCircleInfo();
+      
+      // 这里可以调用API获取不同圈子或排序方式的数据
+      if (newFilter.orderBy) {
+        activeTab.value = newFilter.orderBy;
+      }
+      
+      loading.value = true;
+      setTimeout(() => {
+        loading.value = false;
+      }, 500);
+    }, { deep: true });
+    
+    onMounted(() => {
+      fetchCircleInfo();
+    });
+
     return {
       isPublishAreaExpanded,
       expandPublishArea,
@@ -345,6 +504,12 @@ export default defineComponent({
       textareaRef,
       fileInputRef,
       momentItems,
+      filteredMoments,
+      currentCircleName,
+      topicDisplay,
+      activeTab,
+      loading,
+      switchTab,
       canPublish,
       cancelPublish,
       adjustTextareaHeight,
@@ -792,5 +957,52 @@ export default defineComponent({
   height: 18px;
   background-color: #ccc;
   border-radius: 50%;
+}
+
+/* 添加样式，支持显示当前圈子名称 */
+.current-circle {
+  margin-left: 6px;
+  color: #1677ff;
+  font-weight: 500;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  color: #8c8c8c;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1677ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 0;
+  color: #8c8c8c;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
 }
 </style>

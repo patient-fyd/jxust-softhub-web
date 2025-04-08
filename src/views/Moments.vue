@@ -5,12 +5,35 @@
       <div v-else class="moments-layout">
         <!-- 左侧导航栏 -->
         <div class="left-sidebar">
-          <MomentSidebarLeft />
+          <MomentSidebarLeft 
+            @change-tab="handleTabChange"
+            @select-circle="handleCircleSelect"
+          />
         </div>
         
         <!-- 中间内容区 -->
         <div class="content-area">
-          <MomentContent />
+          <!-- 如果选择了圈子，显示圈子详情 -->
+          <CircleDetail
+            v-if="selectedCircleId > 0"
+            :circleId="selectedCircleId"
+          />
+          
+          <!-- 如果是圈子列表视图，显示圈子列表 -->
+          <CircleList
+            v-else-if="currentTab === 'all-circles' || currentTab === 'my-circles' || currentTab === 'recommend'"
+            :userId="currentTab === 'my-circles' ? userStore.currentUser?.userId || 0 : 0"
+            :orderBy="currentTab === 'recommend' ? 'hot' : ''"
+          />
+          
+          <!-- 否则显示动态内容 -->
+          <MomentContent 
+            v-else
+            :filter="{
+              orderBy: currentTab,
+              circleId: selectedCircleId
+            }"
+          />
         </div>
         
         <!-- 右侧信息栏 -->
@@ -24,27 +47,60 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
+import { useUserStore } from '@/stores/userStore';
 import MomentSidebarLeft from '@/components/moments/MomentSidebarLeft.vue';
 import MomentContent from '@/components/moments/MomentContent.vue';
 import MomentSidebarRight from '@/components/moments/MomentSidebarRight.vue';
+import CircleList from '@/components/moments/CircleList.vue';
+import CircleDetail from '@/components/moments/CircleDetail.vue';
+import { getHotCircles } from '@/services/circleService';
 
 export default defineComponent({
   name: 'MomentsPage',
   components: {
     MomentSidebarLeft,
     MomentContent,
-    MomentSidebarRight
+    MomentSidebarRight,
+    CircleList,
+    CircleDetail
   },
   setup() {
     const loading = ref(true);
+    const currentTab = ref('latest');
+    const selectedCircleId = ref(0);
+    const userStore = useUserStore();
+    
+    const handleTabChange = (tab: string) => {
+      currentTab.value = tab;
+      selectedCircleId.value = 0; // 切换标签时重置圈子选择
+    };
+    
+    const handleCircleSelect = (circleId: number) => {
+      selectedCircleId.value = circleId;
+    };
 
-    onMounted(() => {
-      setTimeout(() => {
-        loading.value = false;
-      }, 800); // 模拟数据加载
+    onMounted(async () => {
+      try {
+        // 预加载热门圈子数据
+        await getHotCircles(1, 5);
+      } catch (error) {
+        console.error('加载热门圈子失败', error);
+      } finally {
+        // 延迟一点加载动画，让用户体验更好
+        setTimeout(() => {
+          loading.value = false;
+        }, 500);
+      }
     });
 
-    return { loading };
+    return { 
+      loading, 
+      currentTab,
+      selectedCircleId,
+      userStore,
+      handleTabChange,
+      handleCircleSelect
+    };
   }
 });
 </script>
