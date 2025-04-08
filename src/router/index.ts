@@ -88,6 +88,46 @@ const routes: Array<RouteRecordRaw> = [
     name: 'ProblemDetail',
     component: () => import('../views/ProblemDetail.vue'),
     props: true
+  },
+  {
+    path: '/about',
+    name: 'About',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/history',
+    name: 'History',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/team',
+    name: 'Team',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/projects',
+    name: 'Projects',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/gallery',
+    name: 'Gallery',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/faq',
+    name: 'FAQ',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/feedback',
+    name: 'Feedback',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
+  },
+  {
+    path: '/forum',
+    name: 'Forum',
+    component: () => import('../views/Home.vue')  // 暂时重定向到首页
   }
 ]
 

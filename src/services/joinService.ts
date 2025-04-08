@@ -60,7 +60,7 @@ export const checkUserApplicationStatus = async () => {
       pageNum: 1
     });
     
-    if (response.code === 0 && response.data.list.length > 0) {
+    if (response.code === 0 && response.data && response.data.list && response.data.list.length > 0) {
       const application = response.data.list[0];
       return {
         hasApplied: true,

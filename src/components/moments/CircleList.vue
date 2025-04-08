@@ -110,24 +110,29 @@ export default defineComponent({
         
         const response = await getCircleList(params);
         
-        if (response.code === 0) {
+        if (response.code === 0 && response.data && response.data.list) {
           if (page === 1) {
             circles.value = response.data.list;
           } else {
             circles.value = [...circles.value, ...response.data.list];
           }
           
-          total.value = response.data.total;
+          total.value = response.data.total || 0;
           currentPage.value = page;
           
           console.log('加载圈子数据成功:', response.data);
         } else {
-          error.value = response.msg || '获取圈子列表失败';
-          console.error('获取圈子列表失败:', response.msg);
-          
-          // 如果API失败，使用模拟数据（仅开发测试用）
-          if (process.env.NODE_ENV === 'development') {
+          if (response.msg === '无效的认证令牌') {
+            console.log('用户未登录，使用默认圈子数据');
             provideFallbackData(page);
+          } else {
+            error.value = response.msg || '获取圈子列表失败';
+            console.error('获取圈子列表失败:', response.msg);
+            
+            // 如果API失败，使用模拟数据（仅开发测试用）
+            if (process.env.NODE_ENV === 'development') {
+              provideFallbackData(page);
+            }
           }
         }
       } catch (err: any) {
@@ -226,21 +231,49 @@ export default defineComponent({
     };
     
     const handleFollow = async (circle: CircleItem) => {
+      // 检查用户是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('请先登录再关注圈子');
+        return;
+      }
+      
+      // 保存原始状态
+      const originalIsFollowed = circle.isFollowed;
+      
+      // 立即更新前端状态，保证用户体验
+      const targetCircle = circles.value.find(c => c.circleId === circle.circleId);
+      if (!targetCircle) return;
+      
+      // 先立即切换状态
+      targetCircle.isFollowed = !targetCircle.isFollowed;
+      
       try {
         const response = await joinCircle({ circleId: circle.circleId });
         
-        if (response.code === 0) {
-          // 更新本地状态
-          const targetCircle = circles.value.find(c => c.circleId === circle.circleId);
-          if (targetCircle) {
+        if (response.code === 0 && response.data) {
+          // 如果API返回了具体状态则以API为准
+          if (response.data.hasOwnProperty('isFollowed')) {
             targetCircle.isFollowed = response.data.isFollowed;
-            console.log(`${response.data.isFollowed ? '关注' : '取消关注'}圈子成功:`, circle.name);
           }
+          
+          console.log(`${targetCircle.isFollowed ? '关注' : '取消关注'}圈子成功:`, circle.name);
         } else {
-          console.error('关注/取消关注圈子失败:', response.msg);
+          // 处理认证失败等情况
+          if (response.msg === '无效的认证令牌') {
+            alert('登录已过期，请重新登录');
+            // 恢复原始状态
+            targetCircle.isFollowed = originalIsFollowed;
+          } else {
+            console.error('关注/取消关注圈子失败:', response.msg);
+          }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('关注/取消关注圈子请求出错:', err);
+        // 发生错误时恢复原始状态
+        if (targetCircle) {
+          targetCircle.isFollowed = originalIsFollowed;
+        }
       }
     };
     

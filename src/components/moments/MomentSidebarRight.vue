@@ -95,6 +95,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
 }
 
 /* 用户卡片 */

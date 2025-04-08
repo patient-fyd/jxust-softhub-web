@@ -37,32 +37,33 @@
       </div>
     </div>
     
-    <div class="sidebar-section communities">
-      <div class="section-title">热门圈子</div>
+    <!-- 推荐圈子，默认显示 -->
+    <div class="sidebar-section recommended-circles">
       <div v-if="loading" class="loading-circles">
         <div class="loading-spinner"></div>
       </div>
       
       <template v-else>
         <div 
-          v-for="circle in hotCircles" 
-          :key="circle.circleId" 
-          class="community-item"
+          v-for="circle in displayedCircles" 
+          :key="circle.circleId"
+          class="circle-item"
           :class="{ 'active': selectedCircleId === circle.circleId }"
           @click="selectCircle(circle.circleId)"
         >
-          <div class="nav-icon">
-            <img v-if="circle.icon" :src="circle.icon" :alt="circle.name" class="circle-icon-img">
-            <Icon v-else icon="mdi:circle-outline" width="20" height="20" />
+          <div class="circle-text">{{ circle.name }}</div>
+          <div class="follow-btn" @click.stop="toggleFollow(circle)">
+            <Icon 
+              :icon="circle.isFollowed ? 'mdi:check' : 'mdi:plus'" 
+              :class="{ 'followed': circle.isFollowed }" 
+              width="16" 
+              height="16" 
+            />
           </div>
-          <div class="community-text">{{ circle.name }}</div>
         </div>
         
-        <div class="community-item" @click="goToAllCircles">
-          <div class="nav-icon">
-            <Icon icon="mdi:dots-horizontal" width="20" height="20" />
-          </div>
-          <div class="community-text">查看更多圈子</div>
+        <div class="circle-item more" @click="toggleShowAll">
+          <div class="circle-text">{{ showAllCircles ? '收起' : '更多' }}</div>
         </div>
       </template>
     </div>
@@ -70,9 +71,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed } from 'vue';
 import { Icon } from '@iconify/vue';
-import { getHotCircles } from '../../services/circleService';
+import { getHotCircles, joinCircle } from '../../services/circleService';
 import type { CircleItem } from '../../types/circle';
 
 export default defineComponent({
@@ -84,9 +85,23 @@ export default defineComponent({
   setup(props, { emit }) {
     const currentTab = ref('latest');
     const selectedCircleId = ref(0);
-    const hotCircles = ref<CircleItem[]>([]);
+    const recommendedCircles = ref<CircleItem[]>([]);
     const loading = ref(false);
     const error = ref('');
+    const showAllCircles = ref(false);
+    const followLoading = ref(new Set<number>());
+    
+    // 控制显示的圈子数量
+    const displayedCircles = computed(() => {
+      return showAllCircles.value 
+        ? recommendedCircles.value 
+        : recommendedCircles.value.slice(0, 4);
+    });
+    
+    // 切换显示全部/部分圈子
+    const toggleShowAll = () => {
+      showAllCircles.value = !showAllCircles.value;
+    };
     
     const handleChangeTab = (tab: string) => {
       currentTab.value = tab;
@@ -104,46 +119,50 @@ export default defineComponent({
       handleChangeTab('all-circles');
     };
     
-    const fetchHotCircles = async () => {
+    // 获取推荐圈子
+    const fetchRecommendedCircles = async () => {
       loading.value = true;
       error.value = '';
       
       try {
-        const response = await getHotCircles(1, 5);
+        const response = await getHotCircles(1, 10); // 获取10个热门圈子作为推荐
         
-        if (response.code === 0) {
-          hotCircles.value = response.data.list;
-          console.log('加载热门圈子成功:', response.data.list);
+        if (response.code === 0 && response.data && response.data.list) {
+          recommendedCircles.value = response.data.list || [];
+          console.log('加载推荐圈子成功:', response.data.list);
         } else {
-          error.value = response.msg || '获取热门圈子失败';
-          console.error('获取热门圈子失败:', response.msg);
-          
-          // 如果API失败，使用模拟数据（仅开发测试用）
-          if (process.env.NODE_ENV === 'development') {
-            provideFallbackHotCircles();
+          // 处理认证失败等错误，提供静默模式，避免在控制台显示过多错误
+          if (response.msg === '无效的认证令牌') {
+            console.log('用户未登录，使用默认推荐圈子');
+            provideFallbackCircles();
+          } else {
+            error.value = response.msg || '获取推荐圈子失败';
+            console.error('获取推荐圈子失败:', response.msg);
+            recommendedCircles.value = []; // 确保总是有有效值
           }
         }
       } catch (err: any) {
-        error.value = err.message || '获取热门圈子失败';
-        console.error('获取热门圈子请求出错:', err);
+        error.value = err.message || '获取推荐圈子失败';
+        console.error('获取推荐圈子请求出错:', err);
+        recommendedCircles.value = []; // 错误情况下设置为空数组
         
-        // 如果API请求出错，使用模拟数据（仅开发测试用）
+        // 在开发环境中提供模拟数据
         if (process.env.NODE_ENV === 'development') {
-          provideFallbackHotCircles();
+          provideFallbackCircles();
         }
       } finally {
         loading.value = false;
       }
     };
     
-    // 提供测试用的模拟热门圈子数据
-    const provideFallbackHotCircles = () => {
-      hotCircles.value = [
+    // 提供默认的圈子数据（未登录或API请求失败时使用）
+    const provideFallbackCircles = () => {
+      recommendedCircles.value = [
         {
           circleId: 1,
-          name: "Vue3学习圈",
-          description: "Vue3源码解析、组合式API、新特性讨论",
+          name: "Vue开发者",
           icon: "/vue-logo.png",
+          description: "Vue框架技术交流",
           postCount: 234,
           memberCount: 1024,
           isOfficial: 1,
@@ -152,20 +171,20 @@ export default defineComponent({
         },
         {
           circleId: 2,
-          name: "TypeScript交流",
-          description: "TypeScript类型体操、高级类型、开发经验",
-          icon: "/ts-logo.png",
+          name: "Web前端圈",
+          icon: "/web-logo.png",
+          description: "前端技术交流和分享",
           postCount: 156,
           memberCount: 820,
-          isOfficial: 0,
-          isFollowed: true,
+          isOfficial: 1,
+          isFollowed: false,
           createTime: "2023-11-15"
         },
         {
           circleId: 3,
-          name: "前端架构师",
-          description: "前端工程化、性能优化、设计模式",
-          icon: "/architect-logo.png",
+          name: "算法竞赛",
+          icon: "/algorithm-logo.png",
+          description: "算法学习与竞赛交流",
           postCount: 98,
           memberCount: 532,
           isOfficial: 0,
@@ -174,42 +193,84 @@ export default defineComponent({
         },
         {
           circleId: 4,
-          name: "算法竞赛",
-          description: "算法思想、LeetCode刷题、面试准备",
-          icon: "/algorithm-logo.png", 
-          postCount: 143,
-          memberCount: 765,
+          name: "程序员日常",
+          icon: "/daily-logo.png",
+          description: "程序员的日常生活与吐槽",
+          postCount: 187,
+          memberCount: 943,
           isOfficial: 0,
           isFollowed: false,
-          createTime: "2024-02-18"
-        },
-        {
-          circleId: 5,
-          name: "面试交流",
-          description: "技术面试经验分享、面经讨论",
-          icon: "/interview-logo.png",
-          postCount: 178,
-          memberCount: 967,
-          isOfficial: 1,
-          isFollowed: false,
-          createTime: "2024-01-10"
+          createTime: "2024-01-05"
         }
       ];
     };
     
+    // 关注/取消关注圈子
+    const toggleFollow = async (circle: CircleItem) => {
+      // 检查当前token是否存在
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // 未登录状态下，提示用户登录
+        alert('请先登录再关注圈子');
+        return;
+      }
+      
+      if (followLoading.value.has(circle.circleId)) return;
+      
+      followLoading.value.add(circle.circleId);
+      
+      // 先保存当前状态
+      const originalStatus = circle.isFollowed;
+      // 立即更新UI状态，提升用户体验
+      circle.isFollowed = !originalStatus;
+      
+      try {
+        const response = await joinCircle({ circleId: circle.circleId });
+        
+        if (response.code === 0 && response.data) {
+          // API成功，使用返回的状态
+          if (response.data.hasOwnProperty('isFollowed')) {
+            circle.isFollowed = response.data.isFollowed;
+          }
+          console.log(`${circle.isFollowed ? '关注' : '取消关注'}圈子成功:`, circle.name);
+        } else {
+          // 检查是否是认证问题
+          if (response.msg === '无效的认证令牌') {
+            alert('登录已过期，请重新登录');
+            // 可以在此处添加重定向到登录页面的逻辑
+            circle.isFollowed = originalStatus; // 恢复原状态
+          } else {
+            console.error(`${originalStatus ? '取消关注' : '关注'}圈子失败:`, response.msg);
+            // API失败时，保持已经更新的前端状态
+          }
+        }
+      } catch (err: any) {
+        console.error(`${originalStatus ? '取消关注' : '关注'}圈子请求出错:`, err);
+        // API错误时，恢复原始状态
+        circle.isFollowed = originalStatus;
+      } finally {
+        followLoading.value.delete(circle.circleId);
+      }
+    };
+    
     onMounted(() => {
-      fetchHotCircles();
+      fetchRecommendedCircles();
     });
     
     return {
       currentTab,
       selectedCircleId,
-      hotCircles,
+      recommendedCircles,
+      displayedCircles,
       loading,
       error,
+      showAllCircles,
       handleChangeTab,
       selectCircle,
-      goToAllCircles
+      goToAllCircles,
+      toggleShowAll,
+      toggleFollow,
+      followLoading
     };
   }
 });
@@ -223,26 +284,13 @@ export default defineComponent({
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  width: auto;
+  width: 100%;
   height: auto;
 }
 
 .sidebar-section {
   margin-bottom: 12px;
   padding: 0;
-}
-
-.communities {
-  margin-top: 8px;
-  border-top: 1px solid #f2f3f5;
-  padding-top: 12px;
-}
-
-.section-title {
-  padding: 8px 16px;
-  font-size: 13px;
-  color: #8c8c8c;
-  font-weight: 500;
 }
 
 .nav-item {
@@ -280,11 +328,6 @@ export default defineComponent({
   color: #3370ff;
 }
 
-.icon-svg {
-  width: 20px;
-  height: 20px;
-}
-
 .nav-text {
   font-size: 14px;
   color: #252933;
@@ -296,50 +339,86 @@ export default defineComponent({
   font-weight: 500;
 }
 
-.community-item {
+.recommended-circles {
+  border-top: 1px solid #f2f3f5;
+  padding: 0;
+  margin-top: 0;
+  padding-left: 20px;
+}
+
+.circle-item {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
+  justify-content: space-between;
+  padding: 8px 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 2px 8px;
   border-radius: 4px;
+  margin: 4px 8px;
+  background-color: #f7f8fa;
 }
 
-.community-item:hover {
-  background-color: #f2f3f5;
-}
-
-.community-item.active {
+.circle-item:hover {
   background-color: #edf2fd;
 }
 
-.community-item.active .community-text {
+.circle-item.active {
+  background-color: #edf2fd;
+  color: #3370ff;
+}
+
+.circle-text {
+  font-size: 14px;
+  color: #525866;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.circle-item.active .circle-text {
   color: #3370ff;
   font-weight: 500;
 }
 
-.community-text {
-  font-size: 14px;
-  color: #8a919f;
+.circle-item.more {
+  margin-top: 8px;
+  background-color: transparent;
+  text-align: center;
 }
 
-.community-item .nav-icon {
-  margin-right: 12px;
-  font-size: 20px;
-  width: 24px;
-  height: 24px;
+.circle-item.more .circle-text {
+  color: #8a919f;
+  text-align: center;
+  width: 100%;
+}
+
+.follow-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #e0e3ea;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #8a919f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.circle-icon-img {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
+.follow-btn:hover {
+  background-color: #3370ff;
+  color: white;
+}
+
+.follow-btn .followed {
+  color: #3370ff;
+}
+
+.follow-btn:hover .followed {
+  color: white;
 }
 
 .loading-circles {

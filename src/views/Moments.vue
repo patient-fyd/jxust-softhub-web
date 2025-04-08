@@ -121,7 +121,7 @@ export default defineComponent({
 }
 
 .moments-container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 0 15px;
 }
@@ -135,14 +135,14 @@ export default defineComponent({
 
 .moments-layout {
   display: grid;
-  grid-template-columns: 240px 1fr 300px;
+  grid-template-columns: 220px 1fr 220px;
   gap: 20px;
 }
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .moments-layout {
-    grid-template-columns: 200px 1fr 250px;
+    grid-template-columns: 200px 1fr 200px;
   }
 }
 
