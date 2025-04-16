@@ -20,6 +20,19 @@
             </div>
           </div>
           
+          <div class="problem-status-info">
+            <div 
+              class="status-badge"
+              :class="{
+                'status-solved': problem.status === 'solved',
+                'status-attempted': problem.status === 'attempted',
+                'status-unsolved': problem.status === 'unsolved'
+              }"
+            >
+              {{ getStatusLabel(problem.status) }}
+            </div>
+          </div>
+          
           <div class="problem-tags">
             <span 
               v-for="(tag, index) in problem.tags" 
@@ -175,7 +188,8 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Problem, problemService } from '../services/ProblemService';
+import { problemService } from '../services/ProblemService';
+import type { Problem } from '../services/ProblemService';
 
 export default defineComponent({
   name: 'ProblemDetailView',
@@ -222,9 +236,30 @@ export default defineComponent({
       { label: 'C++', value: 'cpp' }
     ];
     
+    // 获取题目详情
+    const fetchProblemDetail = async () => {
+      loading.value = true;
+      
+      try {
+        console.log('获取题目详情:', problemId.value);
+        const data = await problemService.getProblemDetail(problemId.value as string);
+        problem.value = data;
+        
+        // 根据题目设置相应的代码模板
+        resetCode();
+      } catch (error) {
+        console.error('获取题目详情失败', error);
+      } finally {
+        loading.value = false;
+      }
+    };
+    
     // 示例代码模板
-    const codeTemplates = {
-      javascript: `/**
+    const getCodeTemplate = (id: string) => {
+      // 根据题目ID返回对应的代码模板
+      const templates: Record<string, Record<string, string>> = {
+        'P0001': {
+          javascript: `/**
  * @param {number[]} nums
  * @param {number} target
  * @return {number[]}
@@ -233,47 +268,96 @@ var twoSum = function(nums, target) {
     // 在这里编写你的代码
     
 };`,
-      python: `class Solution:
+          python: `class Solution:
     def twoSum(self, nums: List[int], target: int) -> List[int]:
         # 在这里编写你的代码
         pass`,
-      java: `class Solution {
+          java: `class Solution {
     public int[] twoSum(int[] nums, int target) {
         // 在这里编写你的代码
         
     }
 }`,
-      cpp: `class Solution {
+          cpp: `class Solution {
 public:
     vector<int> twoSum(vector<int>& nums, int target) {
         // 在这里编写你的代码
         
     }
 };`
-    };
+        },
+        'P0002': {
+          javascript: `/**
+ * @param {character[][]} board
+ * @param {string} word
+ * @return {boolean}
+ */
+var exist = function(board, word) {
+    // 在这里编写你的代码
     
-    // 获取题目数据
-    const fetchProblemDetail = async () => {
-      if (!problemId.value) return;
+};`,
+          python: `class Solution:
+    def exist(self, board: List[List[str]], word: str) -> bool:
+        # 在这里编写你的代码
+        pass`,
+          java: `class Solution {
+    public boolean exist(char[][] board, String word) {
+        // 在这里编写你的代码
+        
+    }
+}`,
+          cpp: `class Solution {
+public:
+    bool exist(vector<vector<char>>& board, string word) {
+        // 在这里编写你的代码
+        
+    }
+};`
+        }
+      };
       
-      loading.value = true;
-      try {
-        problem.value = await problemService.getProblemDetail(problemId.value as string);
-      } catch (error) {
-        console.error('获取题目详情失败', error);
-      } finally {
-        loading.value = false;
+      // 默认模板，如果没有针对特定题目的模板
+      const defaultTemplates: Record<string, string> = {
+        javascript: `/**
+ * 请根据题目要求编写代码
+ */
+function solution() {
+    // 在这里编写你的代码
+    
+}`,
+        python: `class Solution:
+    def solution(self):
+        # 在这里编写你的代码
+        pass`,
+        java: `class Solution {
+    public void solution() {
+        // 在这里编写你的代码
+        
+    }
+}`,
+        cpp: `class Solution {
+public:
+    void solution() {
+        // 在这里编写你的代码
+        
+    }
+};`
+      };
+      
+      const language = selectedLanguage.value as keyof typeof defaultTemplates;
+      
+      // 首先尝试从特定题目模板中获取
+      if (templates[id] && templates[id][language]) {
+        return templates[id][language];
       }
+      
+      // 否则返回默认模板
+      return defaultTemplates[language];
     };
     
-    // 获取难度标签
-    const getDifficultyLabel = (difficulty: string): string => {
-      switch (difficulty) {
-        case 'easy': return '简单';
-        case 'medium': return '中等';
-        case 'hard': return '困难';
-        default: return '';
-      }
+    // 重置代码为模板
+    const resetCode = () => {
+      code.value = getCodeTemplate(problem.value.id);
     };
     
     // 返回题目列表
@@ -281,84 +365,108 @@ public:
       router.push('/practice');
     };
     
-    // 重置代码
-    const resetCode = () => {
-      code.value = codeTemplates[selectedLanguage.value as keyof typeof codeTemplates] || '';
-    };
-    
     // 运行代码
     const runCode = async () => {
-      if (isCodeRunning.value || !problemId.value) return;
+      if (isCodeRunning.value) return;
       
       isCodeRunning.value = true;
-      consoleOutput.value = '';
-      testCases.value = [];
+      consoleOutput.value = '正在运行代码...\n';
+      activeTab.value = 'console';
       
       try {
         const result = await problemService.runCode(
-          problemId.value as string,
+          problem.value.id,
           selectedLanguage.value,
           code.value
         );
         
         consoleOutput.value = result.output;
         testCases.value = result.testCases;
-        
-        // 自动切换到测试用例标签页
-        if (result.testCases.length > 0) {
-          activeTab.value = 'testcases';
-        }
       } catch (error) {
         console.error('运行代码失败', error);
-        consoleOutput.value = '运行代码时发生错误，请稍后再试';
+        consoleOutput.value += '运行失败: ' + (error as Error).message;
       } finally {
         isCodeRunning.value = false;
       }
     };
     
-    // 提交解答
+    // 获取状态标签
+    const getStatusLabel = (status: string) => {
+      switch (status) {
+        case 'solved': return '已解决';
+        case 'attempted': return '尝试过';
+        case 'unsolved': return '未解决';
+        default: return '未知';
+      }
+    };
+    
+    // 提交解决方案
     const submitSolution = async () => {
-      if (isSubmitting.value || !problemId.value) return;
+      if (isSubmitting.value) return;
       
       isSubmitting.value = true;
-      consoleOutput.value = '';
+      consoleOutput.value = '正在提交代码...\n';
+      activeTab.value = 'console';
       
       try {
         const result = await problemService.submitCode(
-          problemId.value as string,
+          problem.value.id,
           selectedLanguage.value,
           code.value
         );
         
-        consoleOutput.value = `> 提交成功！\n> 执行用时: ${result.runtime} ms, 内存消耗: ${result.memory} MB\n> 你的解答已通过所有测试用例`;
-        testCases.value = result.testCases;
-        
-        // 自动切换到测试用例标签页
-        if (result.testCases.length > 0) {
-          activeTab.value = 'testcases';
+        if (result.status === 'accepted') {
+          // 更新当前题目状态为已解决
+          problem.value.status = 'solved';
+          
+          consoleOutput.value += '提交成功！恭喜你通过了所有测试用例。\n';
+          consoleOutput.value += `运行时间: ${result.runtime}ms\n`;
+          consoleOutput.value += `内存消耗: ${result.memory}MB\n`;
+        } else {
+          consoleOutput.value += `提交失败: ${result.status}\n`;
         }
+        
+        testCases.value = result.testCases;
       } catch (error) {
         console.error('提交代码失败', error);
-        consoleOutput.value = '提交代码时发生错误，请稍后再试';
+        consoleOutput.value += '提交失败: ' + (error as Error).message;
       } finally {
         isSubmitting.value = false;
       }
     };
     
-    // 监听语言变化重置代码
-    watch(selectedLanguage, () => {
-      resetCode();
-    });
+    // 获取难度标签
+    const getDifficultyLabel = (difficulty: string) => {
+      switch (difficulty) {
+        case 'easy': return '简单';
+        case 'medium': return '中等';
+        case 'hard': return '困难';
+        default: return '未知';
+      }
+    };
     
     // 监听题目ID变化
     watch(problemId, () => {
       fetchProblemDetail();
-      resetCode();
-    }, { immediate: true });
+    });
+    
+    // 监听语言变化，更新代码模板
+    watch(selectedLanguage, () => {
+      // 只有当代码为空或与当前模板匹配时才更新
+      const currentTemplate = getCodeTemplate(problem.value.id);
+      if (!code.value || code.value === currentTemplate) {
+        resetCode();
+      }
+    });
+    
+    // 组件挂载时获取题目详情
+    onMounted(() => {
+      fetchProblemDetail();
+    });
     
     return {
-      problem,
       loading,
+      problem,
       selectedLanguage,
       availableLanguages,
       code,
@@ -367,11 +475,12 @@ public:
       consoleOutput,
       activeTab,
       testCases,
-      getDifficultyLabel,
-      goBack,
       resetCode,
       runCode,
-      submitSolution
+      submitSolution,
+      goBack,
+      getDifficultyLabel,
+      getStatusLabel
     };
   }
 });
@@ -461,6 +570,36 @@ public:
   background-color: #fff2f0;
   color: #f5222d;
   border: 1px solid #ffccc7;
+}
+
+.problem-status-info {
+  margin: 8px 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-solved {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.status-attempted {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.status-unsolved {
+  background-color: #f5f5f5;
+  color: #888;
+  border: 1px solid #d9d9d9;
 }
 
 .problem-tags {

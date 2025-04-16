@@ -1,20 +1,20 @@
 <template>
   <div class="practice-container">
-    <div class="practice-header">
-      <h1>在线刷题平台</h1>
-      <p class="subtitle">提高编程技能，准备技术面试</p>
-    </div>
-    
     <div class="practice-main">
       <div class="search-filters">
-        <div class="search-box">
-          <input 
-            type="text" 
-            v-model="searchKeyword" 
-            placeholder="搜索题目..." 
-            class="search-input"
-          />
-          <i class="fas fa-search search-icon"></i>
+        <div class="search-box-container">
+          <div class="search-box">
+            <input 
+              type="text" 
+              v-model="searchKeyword" 
+              placeholder="搜索题目..." 
+              class="search-input"
+            />
+            <i class="fas fa-search search-icon"></i>
+          </div>
+          <button class="refresh-btn" @click="fetchProblems" title="刷新题目列表">
+            <i class="fas fa-sync-alt"></i>
+          </button>
         </div>
         
         <div class="filters">
@@ -82,9 +82,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, onActivated } from 'vue';
 import ProblemList from '../components/practice/ProblemList.vue';
-import { Problem, problemService } from '../services/ProblemService';
+import { problemService } from '../services/ProblemService';
+import type { Problem } from '../services/ProblemService';
 
 export default defineComponent({
   name: 'Practice',
@@ -109,7 +110,27 @@ export default defineComponent({
     const fetchProblems = async () => {
       loading.value = true;
       try {
-        problems.value = await problemService.getProblems();
+        const fetchedProblems = await problemService.getProblems();
+        
+        // 确保题目ID唯一（去重）
+        const uniqueProblems = [];
+        const idSet = new Set();
+        
+        for (const problem of fetchedProblems) {
+          // 如果ID不在集合中，则添加到结果数组
+          if (!idSet.has(problem.id)) {
+            idSet.add(problem.id);
+            uniqueProblems.push(problem);
+          }
+        }
+        
+        // 确保题目按照ID排序，保证每次刷新后顺序一致
+        problems.value = uniqueProblems.sort((a, b) => {
+          // 从编号中提取数字部分进行比较
+          const numA = parseInt(a.id.replace(/\D/g, ''));
+          const numB = parseInt(b.id.replace(/\D/g, ''));
+          return numA - numB;
+        });
       } catch (error) {
         console.error('获取题目列表失败', error);
       } finally {
@@ -138,6 +159,11 @@ export default defineComponent({
       fetchProblems();
     });
     
+    // 组件被激活时刷新数据（主要用于从详情页返回时刷新状态）
+    onActivated(() => {
+      fetchProblems();
+    });
+    
     return {
       loading,
       problems,
@@ -146,7 +172,8 @@ export default defineComponent({
       selectedTags,
       availableTags,
       toggleTag,
-      resetFilters
+      resetFilters,
+      fetchProblems
     };
   }
 });
@@ -154,65 +181,61 @@ export default defineComponent({
 
 <style scoped>
 .practice-container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 20px;
 }
 
-.practice-header {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.practice-header h1 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.subtitle {
-  font-size: 16px;
-  color: #666;
-}
-
 .practice-main {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
 .search-filters {
-  padding: 20px;
+  padding: 24px 28px;
   border-bottom: 1px solid #eee;
+  background-color: #f9fafb;
+}
+
+.search-box-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  margin-bottom: 24px;
+  position: relative;
 }
 
 .search-box {
   position: relative;
-  margin-bottom: 20px;
+  flex: 1;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 20px 12px 40px;
+  padding: 14px 20px 14px 45px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 16px;
   transition: all 0.3s;
+  background-color: white;
 }
 
 .search-input:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: #4785ff;
+  box-shadow: 0 0 0 2px rgba(71, 133, 255, 0.25);
   outline: none;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 15px;
   top: 50%;
   transform: translateY(-50%);
   color: #999;
+  font-size: 18px;
 }
 
 .filters {
@@ -224,6 +247,7 @@ export default defineComponent({
 .filter-group {
   display: flex;
   align-items: center;
+  margin-bottom: 5px;
 }
 
 .filter-group label {
@@ -238,46 +262,81 @@ export default defineComponent({
 }
 
 .filter-btn {
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: white;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
 }
 
 .filter-btn:hover {
-  background-color: #f8f9fa;
+  background-color: #f0f5ff;
+  border-color: #c9d6ff;
 }
 
 .filter-btn.active {
-  background-color: #007bff;
+  background-color: #4785ff;
   color: white;
-  border-color: #007bff;
+  border-color: #4785ff;
+  box-shadow: 0 2px 5px rgba(71, 133, 255, 0.2);
 }
 
 .tags-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  max-width: 100%;
 }
 
 .tag-chip {
-  padding: 5px 10px;
-  background-color: #f1f1f1;
+  padding: 6px 12px;
   border-radius: 16px;
-  font-size: 14px;
+  background-color: #f5f5f5;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
+  color: #555;
 }
 
 .tag-chip:hover {
-  background-color: #e0e0e0;
+  background-color: #e8f0fe;
+  color: #4785ff;
 }
 
 .tag-chip.selected {
-  background-color: #007bff;
+  background-color: #4785ff;
   color: white;
+}
+
+.refresh-btn {
+  min-width: 50px;
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #4785ff;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+  position: relative;
+}
+
+.refresh-btn:hover {
+  background-color: #f0f5ff;
+  border-color: #4785ff;
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
 }
 
 @media (max-width: 768px) {

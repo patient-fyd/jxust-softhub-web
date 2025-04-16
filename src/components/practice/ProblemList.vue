@@ -100,9 +100,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, PropType, watch } from 'vue';
+import { defineComponent, computed, ref, watch } from 'vue';
+import type { PropType } from 'vue';
 import { useRouter } from 'vue-router';
-import { Problem } from '../../services/ProblemService';
+import type { Problem } from '../../services/ProblemService';
 
 export default defineComponent({
   name: 'ProblemList',
@@ -196,7 +197,12 @@ export default defineComponent({
     
     // 导航到题目详情页
     function navigateToProblem(id: string) {
-      router.push(`/practice/problem/${id}`);
+      const problem = props.problems.find(p => p.id === id);
+      if (problem) {
+        router.push({
+          path: `/practice/problem/${id}`
+        });
+      }
     }
     
     // 获取状态文本
@@ -226,15 +232,15 @@ export default defineComponent({
       }
     }
     
-    // 监听筛选条件变化，重置页码
+    // 强制确保页码始终有效
     watch(
-      [
-        () => props.searchKeyword, 
-        () => props.selectedDifficulty, 
-        () => props.selectedTags
-      ],
+      [() => totalPages.value, () => filteredProblems.value],
       () => {
-        currentPage.value = 1;
+        if (currentPage.value > totalPages.value && totalPages.value > 0) {
+          currentPage.value = totalPages.value;
+        } else if (totalPages.value === 0) {
+          currentPage.value = 1;
+        }
       }
     );
     
@@ -256,10 +262,10 @@ export default defineComponent({
 
 <style scoped>
 .problem-list-container {
+  width: 100%;
+  padding-bottom: 20px;
   display: flex;
   flex-direction: column;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
   background-color: white;
   overflow: hidden;
 }
@@ -269,18 +275,19 @@ export default defineComponent({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 0;
+  padding: 60px 0;
   color: #666;
+  min-height: 400px; /* 确保加载状态有固定高度 */
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 123, 255, 0.2);
-  border-top-color: #007bff;
+  border: 3px solid rgba(71, 133, 255, 0.2);
+  border-top-color: #4785ff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 @keyframes spin {
@@ -310,10 +317,11 @@ export default defineComponent({
 .problem-list-header {
   display: flex;
   align-items: center;
-  padding: 10px 15px;
+  padding: 15px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #e0e0e0;
   font-weight: 500;
+  color: #444;
 }
 
 .problem-header-status {
@@ -322,38 +330,61 @@ export default defineComponent({
 }
 
 .problem-header-id {
-  width: 70px;
+  width: 80px;
+  font-weight: 500;
+  text-align: center;
 }
 
 .problem-header-title {
-  flex: 1;
+  flex: 2;
+  font-weight: 500;
+  text-align: left;
+  padding-left: 10px;
 }
 
 .problem-header-difficulty {
-  width: 90px;
+  width: 100px;
+  font-weight: 500;
   text-align: center;
 }
 
 .problem-header-tags {
   width: 180px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.problem-list {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .problem-list-body {
   max-height: 600px;
   overflow-y: auto;
+  background-color: white;
 }
 
 .problem-item {
   display: flex;
   align-items: center;
-  padding: 12px 15px;
+  padding: 14px 15px;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .problem-item:hover {
-  background-color: #f5f5f5;
+  background-color: #f5f9ff;
+  transform: translateY(-1px); /* 轻微上浮效果 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.problem-item:active {
+  transform: translateY(0); /* 点击时回到原位置 */
 }
 
 .problem-item:last-child {
@@ -383,33 +414,37 @@ export default defineComponent({
 }
 
 .status-solved {
-  background-color: #28a745;
+  background-color: #52c41a;
+  box-shadow: 0 0 4px rgba(82, 196, 26, 0.5);
 }
 
 .status-attempted {
-  background-color: #ffc107;
+  background-color: #1890ff;
+  box-shadow: 0 0 4px rgba(24, 144, 255, 0.5);
 }
 
 .status-unsolved {
-  background-color: #e0e0e0;
+  background-color: #d9d9d9;
 }
 
 .problem-id {
-  width: 70px;
-  font-size: 14px;
-  color: #666;
+  width: 80px;
+  text-align: center;
 }
 
 .problem-title {
-  flex: 1;
+  flex: 2;
+  text-align: left;
+  padding-left: 10px;
   font-weight: 500;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .problem-difficulty {
-  width: 90px;
+  width: 100px;
   text-align: center;
 }
 
@@ -438,8 +473,9 @@ export default defineComponent({
 .problem-tags {
   width: 180px;
   display: flex;
-  flex-wrap: wrap;
+  justify-content: center;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .tag-badge {
@@ -463,13 +499,17 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
-  border-top: 1px solid #e0e0e0;
+  padding: 15px;
+  margin: 15px 20px 0;
+  background-color: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .page-btn {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   background: white;
@@ -477,6 +517,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
 }
 
 .page-btn:disabled {
@@ -485,12 +526,42 @@ export default defineComponent({
 }
 
 .page-btn:not(:disabled):hover {
-  background-color: #f0f0f0;
+  background-color: #f0f5ff;
+  border-color: #4785ff;
+  color: #4785ff;
 }
 
 .page-info {
-  margin: 0 10px;
-  font-size: 14px;
-  color: #666;
+  margin: 0 15px;
+  font-size: 15px;
+  color: #555;
+  min-width: 80px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* 增加题目条目之间的视觉区分 */
+.problem-item:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.problem-item:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.problem-item.solved:nth-child(even) {
+  background-color: rgba(40, 167, 69, 0.03);
+}
+
+.problem-item.solved:nth-child(odd) {
+  background-color: rgba(40, 167, 69, 0.07);
+}
+
+.problem-item.attempted:nth-child(even) {
+  background-color: rgba(255, 193, 7, 0.03);
+}
+
+.problem-item.attempted:nth-child(odd) {
+  background-color: rgba(255, 193, 7, 0.07);
 }
 </style> 

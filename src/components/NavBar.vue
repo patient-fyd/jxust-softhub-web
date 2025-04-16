@@ -1,12 +1,21 @@
 <template>
   <div class="page">
-    <img
-      src="../assets/logo.svg"
-      class="image"
-      alt="协会Logo"
-      @click="$router.push('/')"
-      style="cursor: pointer;"
-    />
+    <div class="logo-container">
+      <img
+        src="../assets/协会logo.jpg"
+        class="logo-icon"
+        alt="协会Logo"
+        @click="$router.push('/')"
+        style="cursor: pointer;"
+      />
+      <img
+        src="../assets/logo.svg"
+        class="image"
+        alt="文字Logo"
+        @click="$router.push('/')"
+        style="cursor: pointer;"
+      />
+    </div>
     <div class="wrap">
       <div class="container">
         <router-link to="/" class="nav-item">首页</router-link>
@@ -155,6 +164,30 @@ export default defineComponent({
 	align-items: center;
 }
 
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: -50px;
+}
+
+.image {
+  width: 168px;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.wrap {
+  margin-left: 0 !important;
+}
+
 /* Added combined auth button styles */
 .combined-auth {
   display: flex;
@@ -188,12 +221,6 @@ export default defineComponent({
 .auth-part:hover {
   color: #1e40af;
 }
-.image {
-	width: 168px;
-	height: 36px;
-	box-sizing: border-box;
-	margin-left: 24px;
-}
 .wrap {
 	width: 531px;
 	height: 16px;
@@ -203,7 +230,6 @@ export default defineComponent({
 	flex-wrap: nowrap;
 	justify-content: center;
 	align-items: center;
-	margin-left: 276.50px;
 }
 .container {
 	width: 531px;

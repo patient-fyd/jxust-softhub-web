@@ -1,6 +1,8 @@
-<svg width="160" height="40" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+<svg width="230" height="40" viewBox="0 0 380 80" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <!-- 背景透明 -->
   <g fill="none" stroke="none">
+    <!-- 圆形logo部分 -->
+    <image xlink:href="./协会logo.jpg" x="5" y="5" width="70" height="70" preserveAspectRatio="xMidYMid meet" />
     
     <!-- 文字部分 -->
     <text x="85" y="48" font-size="24" font-family="Arial, sans-serif" fill="#1e40af" font-weight="bold">
@@ -10,4 +12,4 @@
       软件协会
     </text>
   </g>
-</svg>
+</svg> 
