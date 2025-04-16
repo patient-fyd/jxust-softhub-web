@@ -44,22 +44,6 @@
         </div>
       </div>
     </div>
-    <div class="card-actions">
-      <button 
-        class="btn btn-primary btn-circle" 
-        @click.stop="handleView"
-        title="查看详情"
-      >
-        <i class="icon icon-view"></i>
-      </button>
-      <button 
-        class="btn btn-success btn-circle" 
-        @click.stop="handleDownload"
-        title="下载资源"
-      >
-        <i class="icon icon-download"></i>
-      </button>
-    </div>
   </div>
 </template>
 
@@ -222,16 +206,6 @@ export default defineComponent({
       emit('view', props.resource);
     };
     
-    // 处理查看按钮点击
-    const handleView = () => {
-      emit('view', props.resource);
-    };
-    
-    // 处理下载按钮点击
-    const handleDownload = () => {
-      emit('download', props.resource);
-    };
-    
     // 组件卸载时释放所有创建的URL
     onUnmounted(() => {
       objectUrls.value.forEach(url => {
@@ -246,9 +220,7 @@ export default defineComponent({
       getCategoryName,
       truncateDescription,
       formatDate,
-      handleClick,
-      handleView,
-      handleDownload
+      handleClick
     };
   }
 });
@@ -304,6 +276,7 @@ export default defineComponent({
   font-weight: bold;
   color: #fff;
   background-color: #409eff;
+  z-index: 2;
 }
 
 .file-type-pdf {
@@ -433,55 +406,47 @@ export default defineComponent({
   margin-right: 4px;
 }
 
-.card-actions {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  gap: 8px;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-.resource-card:hover .card-actions {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 /* 图标样式 */
 .icon {
   display: inline-block;
   width: 1em;
   height: 1em;
-  vertical-align: -0.15em;
+  vertical-align: middle;
   fill: currentColor;
   overflow: hidden;
+  font-size: 18px;
 }
 
 .icon-folder:before {
-  content: "📁";
+  content: "\e906";
+  font-family: "iconfont";
 }
 
 .icon-download:before {
-  content: "⬇️";
+  content: "\e63c";
+  font-family: "iconfont";
 }
 
 .icon-user:before {
-  content: "👤";
+  content: "\e7ae";
+  font-family: "iconfont";
 }
 
 .icon-time:before {
-  content: "🕒";
+  content: "\e65f";
+  font-family: "iconfont";
 }
 
 .icon-view:before {
-  content: "👁️";
+  content: "\e640";
+  font-family: "iconfont";
 }
 
 /* 按钮样式 */
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -519,14 +484,5 @@ export default defineComponent({
 .btn-success:hover {
   background-color: #85ce61;
   border-color: #85ce61;
-}
-
-.btn-circle {
-  border-radius: 50%;
-  padding: 7px;
-  height: 32px;
-  width: 32px;
-  line-height: 32px;
-  text-align: center;
 }
 </style> 

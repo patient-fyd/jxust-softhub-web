@@ -35,16 +35,16 @@
       <!-- 社交媒体图标 -->
       <div class="social-media">
         <a href="#" class="social-icon" title="微信公众号">
-          <span class="icon">📱</span>
+          <i class="iconfont icon-wechat"></i>
         </a>
         <a href="#" class="social-icon" title="QQ空间">
-          <span class="icon">💬</span>
+          <i class="iconfont icon-qq"></i>
         </a>
         <a href="#" class="social-icon" title="微博">
-          <span class="icon">🔖</span>
+          <i class="iconfont icon-weibo"></i>
         </a>
         <a href="#" class="social-icon" title="Bilibili">
-          <span class="icon">📺</span>
+          <i class="iconfont icon-video"></i>
         </a>
       </div>
       
@@ -156,8 +156,25 @@ export default defineComponent({
   color: white;
 }
 
-.icon {
+.iconfont {
   font-size: 20px;
+}
+
+/* 添加图标代码 */
+.icon-wechat:before {
+  content: "\e607";
+}
+
+.icon-qq:before {
+  content: "\e882";
+}
+
+.icon-weibo:before {
+  content: "\e608";
+}
+
+.icon-video:before {
+  content: "\e7c8";
 }
 
 /* 版权信息样式 */
@@ -195,7 +212,7 @@ export default defineComponent({
     height: 35px;
   }
   
-  .icon {
+  .iconfont {
     font-size: 18px;
   }
 }

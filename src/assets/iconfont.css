@@ -1,0 +1,118 @@
+@font-face {
+  font-family: 'iconfont';
+  src: url('https://at.alicdn.com/t/font_2159558_p9y01y35.woff2') format('woff2'),
+       url('https://at.alicdn.com/t/font_2159558_p9y01y35.woff') format('woff'),
+       url('https://at.alicdn.com/t/font_2159558_p9y01y35.ttf') format('truetype'),
+       /* 降级到系统字体 */
+       local('Arial');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 文件夹图标 */
+.icon-folder:before {
+  content: "\e906";
+}
+
+/* 下载图标 */
+.icon-download:before {
+  content: "\e63c";
+}
+
+/* 用户图标 */
+.icon-user:before {
+  content: "\e7ae";
+}
+
+/* 时间图标 */
+.icon-time:before {
+  content: "\e65f";
+}
+
+/* 查看图标 */
+.icon-view:before {
+  content: "\e640";
+}
+
+/* 搜索图标 */
+.icon-search:before {
+  content: "\e67d";
+}
+
+/* 上传图标 */
+.icon-upload:before {
+  content: "\e7da";
+}
+
+/* 分享图标 */
+.icon-share:before {
+  content: "\e67e";
+}
+
+/* 笑脸图标 */
+.icon-smile:before {
+  content: "\e783";
+}
+
+/* 图片图标 */
+.icon-image:before {
+  content: "\e7de";
+}
+
+/* 链接图标 */
+.icon-link:before {
+  content: "\e7e2";
+}
+
+/* 话题/标签图标 */
+.icon-tag:before {
+  content: "\e7e5";
+}
+
+/* 代码图标 */
+.icon-code:before {
+  content: "\e7fc";
+}
+
+/* 箭头左 */
+.icon-arrow-left:before {
+  content: "\e743";
+}
+
+/* 箭头右 */
+.icon-arrow-right:before {
+  content: "\e742";
+}
+
+/* 刷新图标 */
+.icon-reload:before {
+  content: "\e788";
+}
+
+/* 点赞图标 */
+.icon-like:before {
+  content: "\e7c8";
+}
+
+/* 评论图标 */
+.icon-comment:before {
+  content: "\e7d6";
+}
+
+/* 收藏图标 */
+.icon-star:before {
+  content: "\e7df";
+}
+
+/* 空状态图标 */
+.icon-inbox:before {
+  content: "\e7b6";
+} 

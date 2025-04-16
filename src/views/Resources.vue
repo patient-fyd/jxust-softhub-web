@@ -254,10 +254,10 @@
                 </div>
                 <div class="detail-actions">
                   <button class="btn btn-primary" @click="downloadResource(selectedResource)">
-                    <i class="icon icon-download"></i>下载资源
+                    下载资源
                   </button>
                   <button class="btn btn-default" @click="shareResource(selectedResource)">
-                    <i class="icon icon-share"></i>分享
+                    分享
                   </button>
                 </div>
               </div>
@@ -893,34 +893,36 @@ export default defineComponent({
 .icon {
   display: inline-block;
   margin-right: 5px;
+  font-family: "iconfont";
+  vertical-align: middle;
 }
 
 .icon-upload:before {
-  content: "📤";
+  content: "\e7da";
 }
 
 .icon-search:before {
-  content: "🔍";
+  content: "\e67d";
 }
 
 .icon-download:before {
-  content: "⬇️";
+  content: "\e63c";
 }
 
 .icon-user:before {
-  content: "👤";
+  content: "\e7ae";
 }
 
 .icon-time:before {
-  content: "🕒";
+  content: "\e65f";
 }
 
 .icon-folder:before {
-  content: "📁";
+  content: "\e906";
 }
 
 .icon-share:before {
-  content: "🔗";
+  content: "\e67e";
 }
 
 /* 搜索和筛选 */

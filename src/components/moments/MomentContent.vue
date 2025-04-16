@@ -43,11 +43,11 @@
 
         <div class="footer-bar">
           <div class="footer-left">
-            <i class="iconfont">😊</i>
-            <i class="iconfont" @click="triggerImageUpload">🖼️</i>
-            <i class="iconfont">🔗</i>
-            <i class="iconfont" @click="showTopicSelector = !showTopicSelector">#</i>
-            <i class="iconfont">💻</i>
+            <i class="iconfont icon-smile"></i>
+            <i class="iconfont icon-image" @click="triggerImageUpload"></i>
+            <i class="iconfont icon-link"></i>
+            <i class="iconfont icon-tag" @click="showTopicSelector = !showTopicSelector"></i>
+            <i class="iconfont icon-code"></i>
           </div>
           <div class="footer-right">
             <button class="cancel-button" @click="cancelPublish">取消</button>
@@ -125,7 +125,7 @@
       </div>
       
       <div v-else-if="filteredMoments.length === 0" class="empty-state">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon"><i class="iconfont icon-inbox"></i></div>
         <span>还没有内容，成为第一个发布者吧！</span>
       </div>
       
