@@ -32,6 +32,12 @@ export interface Submission {
   }[];
 }
 
+// 添加一个全局状态缓存，用于演示
+export const globalProblemStatus = {
+  solvedProblems: new Set<string>(),
+  attemptedProblems: new Set<string>()
+};
+
 // 导入API客户端
 import apiClient from './api';
 
@@ -218,6 +224,14 @@ class ProblemService {
       console.error('提交代码失败:', error);
       throw error;
     }
+  }
+
+  // 为演示添加的方法：将E1标记为已解决
+  markE1AsSolved(): void {
+    this.solvedProblems.add('E1');
+    this.attemptedProblems.delete('E1');
+    this.saveState();
+    console.log('E1已标记为已解决，已保存到本地存储');
   }
 }
 

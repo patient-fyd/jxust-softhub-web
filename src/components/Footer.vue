@@ -27,8 +27,8 @@
         <div class="link-group contact-info">
           <h3>联系我们</h3>
           <p><span class="contact-label">邮箱：</span>softhub@jxust.edu.cn</p>
-          <p><span class="contact-label">地址：</span>江西省南昌市青山湖区</p>
-          <p><span class="contact-label">QQ群：</span>123456789</p>
+          <p><span class="contact-label">地址：</span>江西省南昌市新建区宏福大道2888号</p>
+          <p><span class="contact-label">QQ群：</span>838480637</p>
         </div>
       </div>
       
