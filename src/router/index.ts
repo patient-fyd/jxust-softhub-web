@@ -46,7 +46,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/resources',
     name: 'Resources',
-    component: () => import('../views/News.vue') // 暂时使用News组件，后续可以创建专门的Resources组件
+    component: () => import('../views/Resources.vue') // 暂时使用News组件，后续可以创建专门的Resources组件
   },
   {
     path: '/join',
