@@ -1,10 +1,8 @@
 @font-face {
   font-family: 'iconfont';
-  src: url('https://at.alicdn.com/t/font_2159558_p9y01y35.woff2') format('woff2'),
-       url('https://at.alicdn.com/t/font_2159558_p9y01y35.woff') format('woff'),
-       url('https://at.alicdn.com/t/font_2159558_p9y01y35.ttf') format('truetype'),
-       /* 降级到系统字体 */
-       local('Arial');
+  src: url('./fonts/iconfont.woff2') format('woff2'),
+       url('./fonts/iconfont.woff') format('woff'),
+       url('./fonts/iconfont.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -115,4 +113,24 @@
 /* 空状态图标 */
 .icon-inbox:before {
   content: "\e7b6";
+}
+
+/* 微信图标 */
+.icon-wechat:before {
+  content: "\e607";
+}
+
+/* QQ图标 */
+.icon-qq:before {
+  content: "\e882";
+}
+
+/* 微博图标 */
+.icon-weibo:before {
+  content: "\e608";
+}
+
+/* 视频/B站图标 */
+.icon-video:before {
+  content: "\e7c8";
 } 

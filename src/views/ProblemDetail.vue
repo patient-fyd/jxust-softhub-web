@@ -182,14 +182,6 @@
         </div>
       </div>
     </div>
-    <div class="detail-actions">
-      <button class="btn btn-primary" @click="downloadResource(selectedResource)">
-        下载资源
-      </button>
-      <button class="btn btn-default" @click="shareResource(selectedResource)">
-        分享
-      </button>
-    </div>
   </div>
 </template>
 

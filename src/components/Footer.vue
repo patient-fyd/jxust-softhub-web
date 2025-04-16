@@ -35,16 +35,16 @@
       <!-- 社交媒体图标 -->
       <div class="social-media">
         <a href="#" class="social-icon" title="微信公众号">
-          <i class="iconfont icon-wechat"></i>
+          <Icon icon="mdi:wechat" width="20" height="20" />
         </a>
         <a href="#" class="social-icon" title="QQ空间">
-          <i class="iconfont icon-qq"></i>
+          <Icon icon="mdi:qqchat" width="20" height="20" />
         </a>
         <a href="#" class="social-icon" title="微博">
-          <i class="iconfont icon-weibo"></i>
+          <Icon icon="mdi:sina-weibo" width="20" height="20" />
         </a>
         <a href="#" class="social-icon" title="Bilibili">
-          <i class="iconfont icon-video"></i>
+          <Icon icon="ri:bilibili-fill" width="20" height="20" />
         </a>
       </div>
       
@@ -59,9 +59,15 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
+import { Icon } from '@iconify/vue';
 
 export default defineComponent({
   name: 'FooterComponent',
+  
+  components: {
+    Icon,
+  },
+  
   setup() {
     const currentYear = computed(() => new Date().getFullYear());
     
@@ -156,27 +162,6 @@ export default defineComponent({
   color: white;
 }
 
-.iconfont {
-  font-size: 20px;
-}
-
-/* 添加图标代码 */
-.icon-wechat:before {
-  content: "\e607";
-}
-
-.icon-qq:before {
-  content: "\e882";
-}
-
-.icon-weibo:before {
-  content: "\e608";
-}
-
-.icon-video:before {
-  content: "\e7c8";
-}
-
 /* 版权信息样式 */
 .copyright {
   text-align: center;
@@ -210,10 +195,6 @@ export default defineComponent({
   .social-icon {
     width: 35px;
     height: 35px;
-  }
-  
-  .iconfont {
-    font-size: 18px;
   }
 }
 </style>

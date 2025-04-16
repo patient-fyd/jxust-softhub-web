@@ -25,21 +25,21 @@
       </div>
       <div class="resource-meta">
         <div class="meta-item meta-category">
-          <i class="icon icon-folder"></i>
+          <Icon icon="mdi:folder-outline" class="meta-icon" />
           <span>{{ getCategoryName(resource.categoryId) }}</span>
         </div>
         <div class="meta-item meta-downloads">
-          <i class="icon icon-download"></i>
+          <Icon icon="mdi:download-outline" class="meta-icon" />
           <span>{{ resource.downloadCount }}</span>
         </div>
       </div>
       <div class="resource-footer">
         <div class="uploader-info">
-          <i class="icon icon-user"></i>
+          <Icon icon="mdi:account-outline" class="meta-icon" />
           <span>{{ resource.uploaderName }}</span>
         </div>
         <div class="upload-time">
-          <i class="icon icon-time"></i>
+          <Icon icon="mdi:clock-outline" class="meta-icon" />
           <span>{{ formatDate(resource.uploadTime) }}</span>
         </div>
       </div>
@@ -50,9 +50,14 @@
 <script lang="ts">
 import { defineComponent, computed, PropType, ref, onUnmounted } from 'vue';
 import type { Resource } from '@/views/Resources.vue';
+import { Icon } from '@iconify/vue';
 
 export default defineComponent({
   name: 'ResourceCard',
+  
+  components: {
+    Icon,
+  },
   
   props: {
     resource: {
@@ -82,42 +87,42 @@ export default defineComponent({
       const title = props.resource.name;
       const shortTitle = title.length > 15 ? title.substring(0, 15) + '...' : title;
       
-      // 根据文件类型选择背景颜色
+      // 根据文件类型选择背景颜色和图标
       let bgColor = '#409eff'; // 默认蓝色
-      let iconSymbol = '📄';   // 默认文档图标
+      let iconSymbol = '\ue906';   // 默认文档图标
       
       switch (props.resource.fileType) {
         case 'pdf':
           bgColor = '#f56c6c'; // 红色
-          iconSymbol = '📕';
+          iconSymbol = '\ue63c';
           break;
         case 'doc':
         case 'docx':
           bgColor = '#409eff'; // 蓝色
-          iconSymbol = '📘';
+          iconSymbol = '\ue7ae';
           break;
         case 'xls':
         case 'xlsx':
           bgColor = '#67c23a'; // 绿色
-          iconSymbol = '📊';
+          iconSymbol = '\ue65f';
           break;
         case 'ppt':
         case 'pptx':
           bgColor = '#e6a23c'; // 橙色
-          iconSymbol = '📊';
+          iconSymbol = '\ue67d';
           break;
         case 'zip':
         case 'rar':
           bgColor = '#909399'; // 灰色
-          iconSymbol = '📦';
+          iconSymbol = '\ue7da';
           break;
         case 'code':
           bgColor = '#9254de'; // 紫色
-          iconSymbol = '💻';
+          iconSymbol = '\ue7fc';
           break;
         case 'img':
           bgColor = '#13c2c2'; // 青色
-          iconSymbol = '🖼️';
+          iconSymbol = '\ue7de';
           break;
       }
       
@@ -128,7 +133,7 @@ export default defineComponent({
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
           <rect width="400" height="300" fill="${bgColor}" />
-          <text x="200" y="100" font-family="Arial" font-size="80" text-anchor="middle" fill="rgba(255,255,255,0.4)">${iconSymbol}</text>
+          <text x="200" y="100" font-family="iconfont" font-size="80" text-anchor="middle" fill="rgba(255,255,255,0.4)">${iconSymbol}</text>
           <text x="200" y="180" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="white">${shortTitle}</text>
           <text x="200" y="250" font-family="Arial" font-size="16" text-anchor="middle" fill="rgba(255,255,255,0.7)">${category}</text>
         </svg>
@@ -383,8 +388,9 @@ export default defineComponent({
   font-size: 13px;
 }
 
-.meta-item i {
+.meta-icon {
   margin-right: 4px;
+  font-size: 18px;
 }
 
 .resource-footer {
@@ -400,46 +406,6 @@ export default defineComponent({
 .uploader-info, .upload-time {
   display: flex;
   align-items: center;
-}
-
-.uploader-info i, .upload-time i {
-  margin-right: 4px;
-}
-
-/* 图标样式 */
-.icon {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  vertical-align: middle;
-  fill: currentColor;
-  overflow: hidden;
-  font-size: 18px;
-}
-
-.icon-folder:before {
-  content: "\e906";
-  font-family: "iconfont";
-}
-
-.icon-download:before {
-  content: "\e63c";
-  font-family: "iconfont";
-}
-
-.icon-user:before {
-  content: "\e7ae";
-  font-family: "iconfont";
-}
-
-.icon-time:before {
-  content: "\e65f";
-  font-family: "iconfont";
-}
-
-.icon-view:before {
-  content: "\e640";
-  font-family: "iconfont";
 }
 
 /* 按钮样式 */
@@ -485,4 +451,4 @@ export default defineComponent({
   background-color: #85ce61;
   border-color: #85ce61;
 }
-</style> 
+</style>

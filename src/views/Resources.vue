@@ -8,7 +8,7 @@
       </div>
       <div class="header-right">
         <button class="btn btn-primary" @click="openUploadModal">
-          <i class="icon icon-upload"></i>上传资源
+          <Icon icon="mdi:upload" class="btn-icon" /> 上传资源
         </button>
       </div>
     </div>
@@ -17,7 +17,7 @@
     <div class="search-filter-container">
       <div class="search-box">
         <div class="search-input-wrapper">
-          <i class="icon icon-search search-icon"></i>
+          <Icon icon="mdi:magnify" class="search-icon" />
           <input
             type="text"
             v-model="searchQuery"
@@ -206,77 +206,83 @@
     />
 
     <!-- 资源详情对话框 -->
-    <div v-if="resourceDetailVisible" class="modal-overlay" @click.self="resourceDetailVisible = false">
-      <div class="modal-container resource-detail-modal">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ selectedResource?.name || '资源详情' }}</h3>
-          <button class="modal-close-btn" @click="resourceDetailVisible = false">&times;</button>
-        </div>
-        
-        <div class="modal-body">
-          <div v-if="selectedResource" class="resource-detail">
-            <div class="detail-header">
-              <div class="detail-cover">
-                <img
-                  :src="getResourceCover(selectedResource)"
-                  :alt="selectedResource.name"
-                  class="cover-image"
-                />
+    <teleport to="body">
+      <div v-if="resourceDetailVisible" class="modal-overlay" @click.self="resourceDetailVisible = false">
+        <div class="modal-container resource-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">资源详情</h2>
+            <button class="modal-close-btn" @click="resourceDetailVisible = false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="resource-detail">
+              <div class="detail-header">
+                <div class="detail-cover">
+                  <img
+                    :src="getResourceCover(selectedResource)"
+                    :alt="selectedResource.name"
+                    class="cover-image"
+                  />
+                </div>
+                <div class="detail-info">
+                  <h1 class="detail-title">{{ selectedResource.name }}</h1>
+                  <div class="detail-meta">
+                    <div class="meta-item">
+                      <Icon icon="mdi:folder-outline" />
+                      <span>分类：{{ getCategoryName(selectedResource.categoryId) }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <Icon icon="mdi:file-outline" />
+                      <span>文件类型：{{ getFileTypeLabel(selectedResource.fileType) }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <Icon icon="mdi:download-outline" />
+                      <span>下载次数：{{ selectedResource.downloadCount }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <Icon icon="mdi:account-outline" />
+                      <span>上传者：{{ selectedResource.uploaderName }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <Icon icon="mdi:clock-outline" />
+                      <span>上传时间：{{ formatDate(selectedResource.uploadTime) }}</span>
+                    </div>
+                  </div>
+                  <div v-if="selectedResource.tags && selectedResource.tags.length > 0" class="detail-tags">
+                    <span
+                      v-for="tag in selectedResource.tags"
+                      :key="tag"
+                      class="detail-tag"
+                    >
+                      {{ tag }}
+                    </span>
+                  </div>
+                  <div class="detail-actions">
+                    <button class="btn btn-primary" @click="downloadResource(selectedResource)">
+                      <Icon icon="mdi:download" /> 下载资源
+                    </button>
+                    <button class="btn btn-default" @click="shareResource(selectedResource)">
+                      <Icon icon="mdi:share" /> 分享
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div class="detail-info">
-                <h3 class="detail-title">{{ selectedResource.name }}</h3>
-                <div class="detail-meta">
-                  <div class="meta-item">
-                    <i class="icon icon-user"></i>
-                    <span>上传者：{{ selectedResource.uploaderName }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <i class="icon icon-time"></i>
-                    <span>上传时间：{{ formatDate(selectedResource.uploadTime) }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <i class="icon icon-download"></i>
-                    <span>下载次数：{{ selectedResource.downloadCount }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <i class="icon icon-folder"></i>
-                    <span>分类：{{ getCategoryName(selectedResource.categoryId) }}</span>
-                  </div>
-                </div>
-                <div class="detail-tags">
-                  <span
-                    v-for="tag in selectedResource.tags"
-                    :key="tag"
-                    class="detail-tag"
-                  >
-                    {{ tag }}
-                  </span>
-                </div>
-                <div class="detail-actions">
-                  <button class="btn btn-primary" @click="downloadResource(selectedResource)">
-                    下载资源
-                  </button>
-                  <button class="btn btn-default" @click="shareResource(selectedResource)">
-                    分享
-                  </button>
-                </div>
+              <div class="detail-description">
+                <h4>资源描述</h4>
+                <p>{{ selectedResource.description }}</p>
               </div>
-            </div>
-            <div class="detail-description">
-              <h4>资源描述</h4>
-              <p>{{ selectedResource.description }}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </teleport>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import ResourceCard from '@/components/resources/ResourceCard.vue';
 import UploadResourceModal from '@/components/resources/UploadResourceModal.vue';
+import { Icon } from '@iconify/vue';
 
 // 资源类型接口
 export interface Resource {
@@ -303,7 +309,8 @@ export default defineComponent({
   
   components: {
     ResourceCard,
-    UploadResourceModal
+    UploadResourceModal,
+    Icon
   },
   
   setup() {
@@ -645,6 +652,24 @@ export default defineComponent({
       return url;
     };
     
+    // 获取文件类型标签
+    const getFileTypeLabel = (fileType: string) => {
+      const fileTypeMap: Record<string, string> = {
+        pdf: 'PDF文档',
+        doc: 'Word文档',
+        docx: 'Word文档',
+        xls: 'Excel表格',
+        xlsx: 'Excel表格',
+        ppt: 'PPT演示',
+        pptx: 'PPT演示',
+        zip: '压缩包',
+        rar: '压缩包',
+        code: '代码文件',
+        img: '图片'
+      };
+      return fileTypeMap[fileType] || fileType.toUpperCase();
+    };
+    
     // 切换标签
     const toggleTag = (tag: string) => {
       if (selectedTags.value.includes(tag)) {
@@ -793,6 +818,7 @@ export default defineComponent({
       getCategoryName,
       formatDate,
       getResourceCover,
+      getFileTypeLabel,
       toggleTag,
       handleSearch,
       handleFilterChange,
@@ -889,40 +915,10 @@ export default defineComponent({
   cursor: not-allowed;
 }
 
-/* 图标样式 */
-.icon {
-  display: inline-block;
+/* 按钮图标样式 */
+.btn-icon {
   margin-right: 5px;
-  font-family: "iconfont";
   vertical-align: middle;
-}
-
-.icon-upload:before {
-  content: "\e7da";
-}
-
-.icon-search:before {
-  content: "\e67d";
-}
-
-.icon-download:before {
-  content: "\e63c";
-}
-
-.icon-user:before {
-  content: "\e7ae";
-}
-
-.icon-time:before {
-  content: "\e65f";
-}
-
-.icon-folder:before {
-  content: "\e906";
-}
-
-.icon-share:before {
-  content: "\e67e";
 }
 
 /* 搜索和筛选 */
@@ -945,6 +941,7 @@ export default defineComponent({
   overflow: hidden;
 }
 
+/* 搜索图标样式 */
 .search-icon {
   display: flex;
   align-items: center;
@@ -1382,7 +1379,7 @@ export default defineComponent({
   color: #666;
 }
 
-.meta-item i {
+.meta-item i, .meta-item svg {
   margin-right: 8px;
 }
 
@@ -1410,6 +1407,12 @@ export default defineComponent({
 .detail-actions {
   display: flex;
   gap: 12px;
+}
+
+.detail-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .detail-description {
