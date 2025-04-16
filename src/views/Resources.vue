@@ -133,6 +133,7 @@
         :key="resource.id"
         :resource="resource"
         :categories="categories"
+        :getResourceCover="getResourceCover"
         @view="handleViewResource"
         @download="handleDownloadResource"
       />
@@ -485,7 +486,7 @@ export default defineComponent({
     const generateMockResources = () => {
       const mockResources: Resource[] = [];
       
-      // 资源名称列表
+      // 资源名称列表 - 确保每个资源有唯一名称
       const resourceNames = [
         '数据结构与算法课程笔记',
         '计算机网络实验报告',
@@ -501,23 +502,38 @@ export default defineComponent({
         '软件测试技术与方法总结',
         '前端开发技术栈指南',
         '后端架构设计文档',
-        '移动应用开发实战案例'
+        '移动应用开发实战案例',
+        '网络安全技术指南',
+        '编译原理课程总结',
+        '计算机图形学基础',
+        '数字图像处理实例',
+        '云计算与分布式系统',
+        'NoSQL数据库技术案例',
+        'Web前端性能优化指南',
+        '微服务架构设计模式',
+        'DevOps实践与工具',
+        'UI/UX设计原则',
+        '大数据处理技术',
+        '虚拟现实开发教程',
+        '区块链技术基础',
+        'Git版本控制完全指南',
+        '敏捷开发实践'
       ];
       
-      // 生成30-50个随机资源
-      const count = Math.floor(Math.random() * 20) + 30; 
-      
-      for (let i = 0; i < count; i++) {
-        const nameIndex = Math.floor(Math.random() * resourceNames.length);
-        const name = i < resourceNames.length 
-          ? resourceNames[i] 
-          : `${resourceNames[nameIndex]} ${i}`;
+      // 保证每个资源有固定编号并且生成固定数量的资源
+      for (let i = 0; i < resourceNames.length; i++) {
+        const id = i + 1; // 固定ID，从1开始
+        const name = resourceNames[i];
           
-        const categoryId = String(Math.floor(Math.random() * 8) + 1);
+        // 确保每个资源类型有固定的分类ID和文件类型
+        const categoryMap = [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6];
+        const categoryId = String(categoryMap[i]);
         
         const fileTypeOptions = ['pdf', 'doc', 'ppt', 'zip', 'xls', 'code', 'img'];
-        const fileType = fileTypeOptions[Math.floor(Math.random() * fileTypeOptions.length)];
+        const fileTypeMap = ['pdf', 'doc', 'pdf', 'ppt', 'pdf', 'code', 'pdf', 'pdf', 'code', 'pdf', 'pdf', 'doc', 'code', 'doc', 'pdf', 'pdf', 'ppt', 'ppt', 'img', 'pdf', 'doc', 'code', 'doc', 'pdf', 'img', 'xls', 'zip', 'pdf', 'doc', 'pdf'];
+        const fileType = fileTypeMap[i];
         
+        // 根据资源ID来确定固定的标签组合
         const tagPool = [
           '期末复习', '课程笔记', '习题集', '编程实践', '课件', 
           '实验报告', '项目资料', '参考书籍', '算法', '数据结构',
@@ -525,37 +541,56 @@ export default defineComponent({
           '机器学习', '网络安全', '操作系统', '软件工程'
         ];
         
-        // 随机选择2-5个标签
-        const tagCount = Math.floor(Math.random() * 4) + 2;
-        const tagIndices = new Set<number>();
-        while (tagIndices.size < tagCount) {
-          tagIndices.add(Math.floor(Math.random() * tagPool.length));
+        // 根据资源ID确定固定的标签组合（每个资源3个标签）
+        const tagIndices = [
+          [0, 1, 8], [5, 16, 19], [10, 19, 1], [4, 19, 14],
+          [0, 1, 9], [12, 3, 5], [1, 18, 0], [15, 2, 3],
+          [11, 3, 16], [1, 18, 8], [16, 1, 7], [19, 1, 5],
+          [13, 14, 19], [14, 19, 15], [13, 19, 3], [17, 19, 3],
+          [1, 2, 4], [8, 9, 1], [11, 16, 3], [1, 9, 7],
+          [15, 19, 14], [13, 3, 19], [14, 19, 15], [19, 14, 15],
+          [13, 3, 4], [11, 16, 15], [3, 13, 14], [17, 19, 16],
+          [3, 14, 19], [19, 3, 14]
+        ];
+        
+        const tags = tagIndices[i].map(index => tagPool[index]);
+        
+        // 添加到热门标签中 - 确保热门标签是一致的
+        if (i < 10) {
+          tags.forEach(tag => {
+            if (!popularTags.value.includes(tag)) {
+              popularTags.value.push(tag);
+            }
+          });
         }
         
-        const tags = Array.from(tagIndices).map(index => tagPool[index]);
+        // 根据ID确定固定的下载次数
+        const downloadCount = 200 + (id * 10); // 确保第一个资源有210次下载量
         
-        // 添加到热门标签中
-        tags.forEach(tag => {
-          if (!popularTags.value.includes(tag) && Math.random() > 0.7) {
-            popularTags.value.push(tag);
-          }
-        });
-        
-        const downloadCount = Math.floor(Math.random() * 500);
-        
-        // 随机生成上传时间（过去1年内）
+        // 根据ID确定固定的上传时间
         const now = new Date();
-        const pastDate = new Date(now.getTime() - Math.random() * 365 * 24 * 60 * 60 * 1000);
+        const daysAgo = id * 3; // 每个资源相差3天
+        const uploadDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+        
+        // 根据ID确定固定的上传者
+        const uploaders = ['张同学', '李老师', '王助教', '赵博士', '软件学院'];
+        const uploaderIndex = i % uploaders.length;
+        
+        // 确保第一个资源有特定的描述，方便演示
+        let description = `这是关于${name}的详细资料，包含了相关的理论知识、实践案例和习题解析，适合课程学习和复习使用。`;
+        if (id === 1) {
+          description = `这是一份完整的数据结构与算法课程笔记，包括了常见数据结构(数组、链表、栈、队列、树、图)的实现原理和常用算法(排序、搜索、动态规划)的详细讲解，配有丰富的图解和代码示例。非常适合期末复习和面试准备使用。`;
+        }
         
         mockResources.push({
-          id: i + 1,
+          id,
           name,
-          description: `这是关于${name}的详细资料，包含了相关的理论知识、实践案例和习题解析，适合课程学习和复习使用。`,
+          description,
           categoryId,
           fileType,
           tags,
-          uploaderName: ['张同学', '李老师', '王助教', '赵博士', '软件学院'][Math.floor(Math.random() * 5)],
-          uploadTime: pastDate.toISOString(),
+          uploaderName: uploaders[uploaderIndex],
+          uploadTime: uploadDate.toISOString(),
           downloadCount,
           coverUrl: ''  // 默认为空，会根据文件类型显示默认封面
         });
@@ -579,9 +614,8 @@ export default defineComponent({
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
     
-    // 获取资源封面
+    // 获取资源封面 - 修改封面生成方法，卡片和详情页都统一使用同样的方式生成封面
     const getResourceCover = (resource: Resource) => {
-      // 如果有封面图，直接返回
       if (resource.coverUrl) {
         return resource.coverUrl;
       }
@@ -592,40 +626,40 @@ export default defineComponent({
       
       // 根据文件类型选择背景颜色
       let bgColor = '#409eff'; // 默认蓝色
-      let iconSymbol = '📄';   // 默认文档图标
+      let iconType = '📄';   // 默认文档图标
       
       switch (resource.fileType) {
         case 'pdf':
           bgColor = '#f56c6c'; // 红色
-          iconSymbol = '📕';
+          iconType = '📄';
           break;
         case 'doc':
         case 'docx':
           bgColor = '#409eff'; // 蓝色
-          iconSymbol = '📘';
+          iconType = '📝';
           break;
         case 'xls':
         case 'xlsx':
           bgColor = '#67c23a'; // 绿色
-          iconSymbol = '📊';
+          iconType = '📊';
           break;
         case 'ppt':
         case 'pptx':
           bgColor = '#e6a23c'; // 橙色
-          iconSymbol = '📊';
+          iconType = '📑';
           break;
         case 'zip':
         case 'rar':
           bgColor = '#909399'; // 灰色
-          iconSymbol = '📦';
+          iconType = '📦';
           break;
         case 'code':
           bgColor = '#9254de'; // 紫色
-          iconSymbol = '💻';
+          iconType = '💻';
           break;
         case 'img':
           bgColor = '#13c2c2'; // 青色
-          iconSymbol = '🖼️';
+          iconType = '🖼️';
           break;
       }
       
@@ -636,7 +670,7 @@ export default defineComponent({
       const svgContent = `
         <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
           <rect width="400" height="300" fill="${bgColor}" />
-          <text x="200" y="100" font-family="Arial" font-size="80" text-anchor="middle" fill="rgba(255,255,255,0.4)">${iconSymbol}</text>
+          <text x="200" y="120" font-family="Arial" font-size="64" text-anchor="middle" fill="rgba(255,255,255,0.3)">${iconType}</text>
           <text x="200" y="180" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="white">${shortTitle}</text>
           <text x="200" y="250" font-family="Arial" font-size="16" text-anchor="middle" fill="rgba(255,255,255,0.7)">${category}</text>
         </svg>
@@ -1056,7 +1090,7 @@ export default defineComponent({
 .resources-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  gap: 28px;
   margin-bottom: 32px;
 }
 

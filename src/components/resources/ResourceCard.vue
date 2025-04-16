@@ -1,46 +1,52 @@
 <template>
-  <div class="resource-card" @click="handleClick">
+  <div class="resource-card" @click="handleCardClick">
     <div class="card-cover">
-      <img :src="coverImage" :alt="resource.name" class="cover-image" />
-      <div class="file-type-badge" :class="`file-type-${resource.fileType}`">
-        {{ getFileTypeLabel(resource.fileType) }}
-      </div>
+      <img :src="coverUrl" :alt="resource.name" class="cover-img" />
     </div>
     <div class="card-content">
-      <h3 class="resource-title" :title="resource.name">{{ resource.name }}</h3>
-      <p class="resource-description" :title="resource.description">
-        {{ truncateDescription(resource.description) }}
+      <h3 class="card-title" :title="resource.name">{{ resource.name }}</h3>
+      <p class="card-description" :title="resource.description">
+        {{ shortDescription }}
       </p>
-      <div class="resource-tags">
+      <div class="card-tags">
         <span
           v-for="tag in displayedTags"
           :key="tag"
-          class="resource-tag"
+          class="card-tag"
+          @click.stop
         >
           {{ tag }}
         </span>
-        <div v-if="resource.tags.length > displayedTags.length" class="tags-more">
-          +{{ resource.tags.length - displayedTags.length }}
-        </div>
+        <span v-if="resource.tags.length > 2" class="more-tags">
+          +{{ resource.tags.length - 2 }}
+        </span>
       </div>
-      <div class="resource-meta">
-        <div class="meta-item meta-category">
+      <div class="card-meta">
+        <div class="meta-item">
           <Icon icon="mdi:folder-outline" class="meta-icon" />
-          <span>{{ getCategoryName(resource.categoryId) }}</span>
+          <span>{{ categoryName }}</span>
         </div>
-        <div class="meta-item meta-downloads">
-          <Icon icon="mdi:download-outline" class="meta-icon" />
-          <span>{{ resource.downloadCount }}</span>
-        </div>
-      </div>
-      <div class="resource-footer">
-        <div class="uploader-info">
+        <div class="meta-item">
           <Icon icon="mdi:account-outline" class="meta-icon" />
           <span>{{ resource.uploaderName }}</span>
         </div>
-        <div class="upload-time">
+      </div>
+      <div class="card-footer">
+        <div class="meta-item">
+          <Icon icon="mdi:download-outline" class="meta-icon" />
+          <span>{{ resource.downloadCount }}</span>
+        </div>
+        <div class="meta-item">
           <Icon icon="mdi:clock-outline" class="meta-icon" />
           <span>{{ formatDate(resource.uploadTime) }}</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-icon" @click.stop="handleView">
+            <Icon icon="mdi:eye-outline" />
+          </button>
+          <button class="btn btn-icon" @click.stop="handleDownload">
+            <Icon icon="mdi:download-outline" />
+          </button>
         </div>
       </div>
     </div>
@@ -48,15 +54,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, PropType, ref, onUnmounted } from 'vue';
-import type { Resource } from '@/views/Resources.vue';
+import { defineComponent, computed, PropType } from 'vue';
+import { Resource, Category } from '@/views/Resources.vue';
 import { Icon } from '@iconify/vue';
 
 export default defineComponent({
   name: 'ResourceCard',
   
   components: {
-    Icon,
+    Icon
   },
   
   props: {
@@ -65,140 +71,36 @@ export default defineComponent({
       required: true
     },
     categories: {
-      type: Array as PropType<{ id: string; name: string }[]>,
-      default: () => []
+      type: Array as PropType<Category[]>,
+      required: true
+    },
+    getResourceCover: {
+      type: Function,
+      required: true
     }
   },
   
   emits: ['view', 'download'],
   
   setup(props, { emit }) {
-    // 存储创建的对象URL，以便在组件卸载时释放
-    const objectUrls = ref<string[]>([]);
-    
-    // 计算属性：封面图片
-    const coverImage = computed(() => {
-      // 如果有封面图，直接返回
-      if (props.resource.coverUrl) {
-        return props.resource.coverUrl;
-      }
-      
-      // 生成默认封面SVG
-      const title = props.resource.name;
-      const shortTitle = title.length > 15 ? title.substring(0, 15) + '...' : title;
-      
-      // 根据文件类型选择背景颜色和图标
-      let bgColor = '#409eff'; // 默认蓝色
-      let iconSymbol = '\ue906';   // 默认文档图标
-      
-      switch (props.resource.fileType) {
-        case 'pdf':
-          bgColor = '#f56c6c'; // 红色
-          iconSymbol = '\ue63c';
-          break;
-        case 'doc':
-        case 'docx':
-          bgColor = '#409eff'; // 蓝色
-          iconSymbol = '\ue7ae';
-          break;
-        case 'xls':
-        case 'xlsx':
-          bgColor = '#67c23a'; // 绿色
-          iconSymbol = '\ue65f';
-          break;
-        case 'ppt':
-        case 'pptx':
-          bgColor = '#e6a23c'; // 橙色
-          iconSymbol = '\ue67d';
-          break;
-        case 'zip':
-        case 'rar':
-          bgColor = '#909399'; // 灰色
-          iconSymbol = '\ue7da';
-          break;
-        case 'code':
-          bgColor = '#9254de'; // 紫色
-          iconSymbol = '\ue7fc';
-          break;
-        case 'img':
-          bgColor = '#13c2c2'; // 青色
-          iconSymbol = '\ue7de';
-          break;
-      }
-      
-      // 获取分类名称显示在底部
-      const category = getCategoryName(props.resource.categoryId);
-      
-      // 生成SVG封面
-      const svgContent = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
-          <rect width="400" height="300" fill="${bgColor}" />
-          <text x="200" y="100" font-family="iconfont" font-size="80" text-anchor="middle" fill="rgba(255,255,255,0.4)">${iconSymbol}</text>
-          <text x="200" y="180" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="white">${shortTitle}</text>
-          <text x="200" y="250" font-family="Arial" font-size="16" text-anchor="middle" fill="rgba(255,255,255,0.7)">${category}</text>
-        </svg>
-      `;
-      
-      // 转换SVG为blob URL
-      const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(svgBlob);
-      
-      // 保存创建的URL以便稍后释放
-      objectUrls.value.push(url);
-      
-      return url;
-    });
-    
-    // 计算属性：显示的标签（最多显示3个）
-    const displayedTags = computed(() => {
-      return props.resource.tags.slice(0, 3);
-    });
-    
-    // 获取文件类型标签
-    const getFileTypeLabel = (fileType: string) => {
-      const fileTypeMap: Record<string, string> = {
-        pdf: 'PDF',
-        doc: 'Word',
-        docx: 'Word',
-        xls: 'Excel',
-        xlsx: 'Excel',
-        ppt: 'PPT',
-        pptx: 'PPT',
-        zip: 'ZIP',
-        rar: 'RAR',
-        code: '代码',
-        img: '图片'
-      };
-      return fileTypeMap[fileType] || fileType.toUpperCase();
-    };
-    
     // 获取分类名称
-    const getCategoryName = (categoryId: string) => {
-      if (props.categories.length > 0) {
-        const category = props.categories.find(c => c.id === categoryId);
-        return category ? category.name : '未分类';
-      }
-      
-      // 硬编码分类名称（如果未提供categories属性）
-      const categoryMap: Record<string, string> = {
-        '1': '课程笔记',
-        '2': '实验报告',
-        '3': '习题解析',
-        '4': '课件资料',
-        '5': '编程代码',
-        '6': '电子书籍',
-        '7': '考试资料',
-        '8': '项目文档'
-      };
-      return categoryMap[categoryId] || '未分类';
-    };
+    const categoryName = computed(() => {
+      const category = props.categories.find(c => c.id === props.resource.categoryId);
+      return category ? category.name : '未分类';
+    });
     
-    // 截断描述文本
-    const truncateDescription = (description: string) => {
-      return description.length > 60 
-        ? description.substring(0, 60) + '...' 
-        : description;
-    };
+    // 展示的标签（最多2个）
+    const displayedTags = computed(() => {
+      return props.resource.tags.slice(0, 2);
+    });
+    
+    // 描述截取
+    const shortDescription = computed(() => {
+      if (props.resource.description.length > 100) {
+        return props.resource.description.substring(0, 100) + '...';
+      }
+      return props.resource.description;
+    });
     
     // 格式化日期
     const formatDate = (dateString: string) => {
@@ -206,26 +108,41 @@ export default defineComponent({
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
     
-    // 处理卡片点击
-    const handleClick = () => {
+    // 获取封面URL
+    const coverUrl = computed(() => {
+      // 如果资源有封面，直接使用
+      if (props.resource.coverUrl) {
+        return props.resource.coverUrl;
+      }
+      
+      // 使用父组件传递的方法获取封面
+      return props.getResourceCover(props.resource);
+    });
+    
+    // 查看资源
+    const handleView = () => {
       emit('view', props.resource);
     };
     
-    // 组件卸载时释放所有创建的URL
-    onUnmounted(() => {
-      objectUrls.value.forEach(url => {
-        URL.revokeObjectURL(url);
-      });
-    });
+    // 下载资源
+    const handleDownload = () => {
+      emit('download', props.resource);
+    };
+    
+    // 卡片点击
+    const handleCardClick = () => {
+      handleView();
+    };
     
     return {
-      coverImage,
+      categoryName,
       displayedTags,
-      getFileTypeLabel,
-      getCategoryName,
-      truncateDescription,
+      shortDescription,
       formatDate,
-      handleClick
+      coverUrl,
+      handleView,
+      handleDownload,
+      handleCardClick
     };
   }
 });
@@ -233,222 +150,143 @@ export default defineComponent({
 
 <style scoped>
 .resource-card {
+  background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
-  background-color: #fff;
-  position: relative;
+  cursor: pointer;
   height: 100%;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
 }
 
 .resource-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
 .card-cover {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%; /* 16:9 比例 */
+  height: 200px;
   overflow: hidden;
 }
 
-.cover-image {
-  position: absolute;
-  top: 0;
-  left: 0;
+.cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s;
+  transition: transform 0.3s;
 }
 
-.resource-card:hover .cover-image {
+.resource-card:hover .cover-img {
   transform: scale(1.05);
 }
 
-.file-type-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  color: #fff;
-  background-color: #409eff;
-  z-index: 2;
-}
-
-.file-type-pdf {
-  background-color: #f56c6c;
-}
-
-.file-type-doc, .file-type-docx {
-  background-color: #409eff;
-}
-
-.file-type-xls, .file-type-xlsx {
-  background-color: #67c23a;
-}
-
-.file-type-ppt, .file-type-pptx {
-  background-color: #e6a23c;
-}
-
-.file-type-zip, .file-type-rar {
-  background-color: #909399;
-}
-
-.file-type-code {
-  background-color: #9254de;
-}
-
-.file-type-img {
-  background-color: #13c2c2;
-}
-
 .card-content {
-  flex: 1;
   padding: 16px;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
+  min-height: 180px;
 }
 
-.resource-title {
-  margin: 0 0 10px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  line-height: 1.4;
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: #303133;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  min-height: 2.8em;
 }
 
-.resource-description {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 12px;
+.card-description {
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+  height: 60px;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  min-height: 2.8em;
 }
 
-.resource-tags {
+.card-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 12px;
 }
 
-.resource-tag {
-  padding: 0 10px;
-  height: 22px;
-  line-height: 22px;
+.card-tag {
+  display: inline-block;
+  padding: 0 6px;
+  height: 20px;
+  line-height: 20px;
   font-size: 12px;
   color: #409eff;
   background-color: #ecf5ff;
-  border: 1px solid #d9ecff;
   border-radius: 4px;
   box-sizing: border-box;
   white-space: nowrap;
 }
 
-.tags-more {
+.more-tags {
   font-size: 12px;
   color: #909399;
-  background-color: #f4f4f5;
-  padding: 0 6px;
-  border-radius: 4px;
-  line-height: 22px;
+  line-height: 20px;
 }
 
-.resource-meta {
+.card-meta {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+  margin-bottom: 10px;
+  gap: 8px;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  color: #606266;
-  font-size: 13px;
+  color: #909399;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .meta-icon {
   margin-right: 4px;
-  font-size: 18px;
+  font-size: 14px;
+  vertical-align: middle;
 }
 
-.resource-footer {
+.card-footer {
   margin-top: auto;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 12px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
   color: #909399;
-  font-size: 12px;
-}
-
-.uploader-info, .upload-time {
-  display: flex;
-  align-items: center;
-}
-
-/* 按钮样式 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  white-space: nowrap;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #dcdfe6;
-  color: #606266;
-  text-align: center;
-  box-sizing: border-box;
-  outline: none;
-  margin: 0;
-  font-weight: 500;
-  padding: 8px 15px;
-  font-size: 14px;
+  padding: 4px;
   border-radius: 4px;
-  transition: .1s;
+  transition: all 0.3s;
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #409eff;
-  border-color: #409eff;
+.btn-icon:hover {
+  color: #409eff;
+  background-color: #f0f7ff;
 }
 
-.btn-primary:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
-}
-
-.btn-success {
-  color: #fff;
-  background-color: #67c23a;
-  border-color: #67c23a;
-}
-
-.btn-success:hover {
-  background-color: #85ce61;
-  border-color: #85ce61;
+.card-actions {
+  display: flex;
+  gap: 6px;
 }
 </style>

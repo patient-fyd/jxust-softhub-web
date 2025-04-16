@@ -74,3 +74,57 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* 全局资源卡片样式 */
+.resource-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.resource-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-cover {
+  height: 200px !important;
+  overflow: hidden;
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.resource-card:hover .cover-img {
+  transform: scale(1.05);
+}
+
+.card-content {
+  padding: 16px !important;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 180px !important;
+}
+
+.card-description {
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+  height: 60px !important;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical;
+}
