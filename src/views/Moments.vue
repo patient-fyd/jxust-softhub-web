@@ -47,13 +47,13 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
-import { useUserStore } from '@/stores/userStore';
-import MomentSidebarLeft from '@/components/moments/MomentSidebarLeft.vue';
-import MomentContent from '@/components/moments/MomentContent.vue';
-import MomentSidebarRight from '@/components/moments/MomentSidebarRight.vue';
-import CircleList from '@/components/moments/CircleList.vue';
-import CircleDetail from '@/components/moments/CircleDetail.vue';
-import { getHotCircles } from '@/services/circleService';
+import { useUserStore } from '../stores/userStore';
+import MomentSidebarLeft from '../components/moments/MomentSidebarLeft.vue';
+import MomentContent from '../components/moments/MomentContent.vue';
+import MomentSidebarRight from '../components/moments/MomentSidebarRight.vue';
+import CircleList from '../components/moments/CircleList.vue';
+import CircleDetail from '../components/moments/CircleDetail.vue';
+import { getHotCircles } from '../services/circleService';
 
 export default defineComponent({
   name: 'MomentsPage',

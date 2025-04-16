@@ -1,0 +1,18 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="100" fill="url(#gradient)" />
+  
+  <!-- 头部形状 -->
+  <circle cx="100" cy="85" r="40" fill="#ffffff" />
+  
+  <!-- 身体形状 -->
+  <path d="M100,135 C65,135 40,165 40,200 L160,200 C160,165 135,135 100,135 Z" fill="#ffffff" />
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1677ff" />
+      <stop offset="100%" stop-color="#4096ff" />
+    </linearGradient>
+  </defs>
+</svg> 

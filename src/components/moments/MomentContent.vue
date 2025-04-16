@@ -2,16 +2,11 @@
   <div class="moment-content">
     <!-- 嵌入式发布沸点区域 -->
     <div class="embedded-publish-area" :class="{ 'expanded': isPublishAreaExpanded }">
-      <div class="publish-header">
+      <div class="publish-header" v-if="!isPublishAreaExpanded" @click="showPublishDialog">
         <div class="avatar">
-          <img src="/default-avatar.png" alt="用户头像">
+          <img :src="userStore.currentUser?.avatar || '/assets/images/default-avatar.svg'" alt="Avatar" />
         </div>
-        <div class="publish-input" @click="expandPublishArea" v-if="!isPublishAreaExpanded">
-          <span>分享你的见解、经验和想法...</span>
-          <span v-if="currentCircleName" class="current-circle">
-            #{{ currentCircleName }}#
-          </span>
-        </div>
+        <div class="publish-input">有什么新鲜事想分享？</div>
       </div>
       
       <!-- 展开后的编辑区域 -->
@@ -137,11 +132,11 @@
       <div v-else v-for="(item, index) in filteredMoments" :key="index" class="moment-item">
         <div class="moment-user">
           <div class="avatar">
-            <img :src="item.avatar" alt="用户头像">
+            <img :src="item.userAvatar || '/assets/images/default-avatar.svg'" alt="用户头像">
           </div>
           <div class="user-info">
-            <div class="username">{{ item.username }}</div>
-            <div class="publish-time">{{ item.time }}</div>
+            <div class="username">{{ item.userName }}</div>
+            <div class="publish-time">{{ formatTime(item.createTime) }}</div>
           </div>
           <div class="more-actions">
             <i class="icon-more"></i>
@@ -164,12 +159,12 @@
         
         <div class="moment-actions">
           <div class="action-item">
-            <i class="icon-like"></i>
-            <span>{{ item.likes }}</span>
+            <i class="icon-like" :class="{ 'liked': item.isLiked }"></i>
+            <span>{{ item.likesCount }}</span>
           </div>
           <div class="action-item">
             <i class="icon-comment"></i>
-            <span>{{ item.comments }}</span>
+            <span>{{ item.commentsCount }}</span>
           </div>
           <div class="action-item">
             <i class="icon-share"></i>
@@ -178,15 +173,33 @@
         </div>
       </div>
     </div>
+
+    <!-- 发布动态对话框 -->
+    <PublishMomentDialog 
+      :visible="showDialog"
+      @close="closePublishDialog"
+      @publish-success="handlePublishSuccess"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch, PropType } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import type { PropType } from 'vue';
+import { useUserStore } from '../../stores/userStore';
 import { getCircleDetail } from '../../services/circleService';
+import { getMomentList, createMoment } from '../../services/momentService';
+import { uploadImages } from '../../services/uploadService';
+import type { Moment } from '../../types/moment';
+import MomentCard from './MomentCard.vue';
+import PublishMomentDialog from './PublishMomentDialog.vue';
 
 export default defineComponent({
   name: 'MomentContent',
+  components: {
+    MomentCard,
+    PublishMomentDialog
+  },
   props: {
     filter: {
       type: Object as PropType<{
@@ -200,6 +213,7 @@ export default defineComponent({
     }
   },
   setup(props) {
+    const userStore = useUserStore();
     const isPublishAreaExpanded = ref(false);
     const content = ref('');
     const images = ref<{ id: string; url: string }[]>([]);
@@ -209,81 +223,38 @@ export default defineComponent({
     const textareaRef = ref<HTMLTextAreaElement | null>(null);
     const fileInputRef = ref<HTMLInputElement | null>(null);
     const loading = ref(false);
-    const activeTab = ref('recommend');
+    const activeTab = ref(props.filter.orderBy || 'latest');
     const currentCircleName = ref('');
+    const showDialog = ref(false);
     
-    const momentItems = ref([
-      {
-        username: '前端要努力',
-        avatar: '/default-avatar.png',
-        time: '3小时前',
-        content: '分享一个我做的Vue3项目，历时3个月，求大家点评和建议！',
-        images: ['/image1.jpg', '/image2.jpg'],
-        topic: 'Vue3学习',
-        likes: 128,
-        comments: 32,
-        circleId: 1
-      },
-      {
-        username: 'TypeScript爱好者',
-        avatar: '/default-avatar.png',
-        time: '昨天',
-        content: '今天终于解决了困扰我一周的TypeScript类型问题，分享给大家：当你需要定义一个复杂的嵌套类型时，可以这样做...',
-        images: [],
-        topic: 'TypeScript',
-        likes: 56,
-        comments: 18,
-        circleId: 2
-      },
-      {
-        username: '程序员日常',
-        avatar: '/default-avatar.png',
-        time: '2天前',
-        content: '当你花了一整天debug，最后发现是因为一个分号...',
-        images: ['/image3.jpg'],
-        topic: '程序员生活',
-        likes: 299,
-        comments: 45,
-        circleId: 3
-      },
-      {
-        username: 'React学习者',
-        avatar: '/default-avatar.png',
-        time: '3天前',
-        content: 'React Hooks真是太强大了，今天学习了useCallback和useMemo，感觉豁然开朗！',
-        images: [],
-        topic: 'React',
-        likes: 120,
-        comments: 25,
-        circleId: 4
-      },
-      {
-        username: '算法爱好者',
-        avatar: '/default-avatar.png',
-        time: '4天前',
-        content: '今天解决了一道困难的动态规划题目，分享一下思路...',
-        images: ['/image4.jpg'],
-        topic: '算法',
-        likes: 88,
-        comments: 15,
-        circleId: 5
+    // 初始化为空数组，不再使用静态数据
+    const momentItems = ref<Moment[]>([]);
+    
+    // 热门话题 - 初始化为空数组
+    const hotTopics = ref<string[]>([]);
+
+    // 加载动态数据
+    const loadMoments = async () => {
+      loading.value = true;
+      try {
+        const response = await getMomentList({
+          pageNum: 1,
+          pageSize: 20,
+          // 如果有圈子ID，添加圈子过滤
+          ...(props.filter.circleId ? { circleId: props.filter.circleId } : {})
+        });
+        
+        if (response.code === 0 && response.data && response.data.list) {
+          momentItems.value = response.data.list;
+        } else {
+          console.error('获取动态列表失败:', response.msg);
+        }
+      } catch (error) {
+        console.error('获取动态列表失败:', error);
+      } finally {
+        loading.value = false;
       }
-    ]);
-    
-    // 热门话题示例数据
-    const hotTopics = ref([
-      '新人报道',
-      'Vue3学习',
-      'TypeScript',
-      '程序员生活',
-      '前端日常',
-      '面试经验',
-      '技术分享',
-      '项目实战',
-      '源码解析',
-      '算法学习',
-      '开发工具'
-    ]);
+    };
     
     // 获取当前圈子信息
     const fetchCircleInfo = async () => {
@@ -305,29 +276,56 @@ export default defineComponent({
       }
     };
     
+    // 格式化时间为相对时间
+    const formatTime = (timeString: string): string => {
+      const date = new Date(timeString);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      
+      // 1分钟内显示"刚刚"
+      if (diff < 60 * 1000) {
+        return '刚刚';
+      }
+      
+      // 1小时内显示"x分钟前"
+      if (diff < 60 * 60 * 1000) {
+        return `${Math.floor(diff / (60 * 1000))}分钟前`;
+      }
+      
+      // 24小时内显示"x小时前"
+      if (diff < 24 * 60 * 60 * 1000) {
+        return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
+      }
+      
+      // 30天内显示"x天前"
+      if (diff < 30 * 24 * 60 * 60 * 1000) {
+        return `${Math.floor(diff / (24 * 60 * 60 * 1000))}天前`;
+      }
+      
+      // 超过30天显示具体日期
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
     // 根据过滤器筛选动态
     const filteredMoments = computed(() => {
       let result = [...momentItems.value];
-      
-      // 按圈子筛选
-      if (props.filter.circleId && props.filter.circleId > 0) {
-        result = result.filter(item => item.circleId === props.filter.circleId);
-      }
       
       // 按排序方式筛选
       if (activeTab.value) {
         switch (activeTab.value) {
           case 'hot':
             // 热门排序：按点赞数降序
-            result.sort((a, b) => b.likes - a.likes);
+            result.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
             break;
           case 'latest':
-            // 最新排序：已经按时间排序，不需要额外处理
-            // 如果有实际时间戳，这里可以做排序
+            // 最新排序：按创建时间降序
+            result.sort((a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime());
             break;
           case 'recommend':
-            // 推荐算法，这里模拟一个随机推荐
-            result.sort(() => Math.random() - 0.5);
+            // 推荐算法，这里可以有其他排序逻辑
             break;
         }
       }
@@ -337,8 +335,8 @@ export default defineComponent({
     
     // 话题显示文本
     const topicDisplay = computed(() => {
-      if (selectedTopic) {
-        return `#${selectedTopic}#`;
+      if (selectedTopic.value) {
+        return `#${selectedTopic.value}#`;
       } else if (currentCircleName.value) {
         return `#${currentCircleName.value}#`;
       } else {
@@ -349,20 +347,22 @@ export default defineComponent({
     // 切换标签
     const switchTab = (tab: string) => {
       activeTab.value = tab;
-      // 这里可以调用接口加载不同类型的数据
-      loading.value = true;
-      setTimeout(() => {
-        loading.value = false;
-      }, 500);
+      loadMoments();
     };
     
     // 判断是否可以发布
     const canPublish = computed(() => {
-      return content.value.trim().length > 0;
+      return content.value.trim().length > 0 && userStore.currentUser !== null;
     });
     
     // 展开发布区域
     const expandPublishArea = () => {
+      // 检查用户是否已登录
+      if (!userStore.currentUser) {
+        alert('请先登录后再发布内容');
+        return;
+      }
+      
       isPublishAreaExpanded.value = true;
       // 等待DOM更新后聚焦到文本框
       setTimeout(() => {
@@ -402,23 +402,32 @@ export default defineComponent({
     };
     
     // 处理文件上传
-    const handleFileUpload = (event: Event) => {
+    const handleFileUpload = async (event: Event) => {
       const target = event.target as HTMLInputElement;
-      if (target.files) {
+      if (target.files && target.files.length > 0) {
         const fileList = Array.from(target.files);
         const allowedFiles = fileList.slice(0, 9 - images.value.length);
         
-        allowedFiles.forEach(file => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const id = Date.now() + Math.random().toString(36).substring(2, 15);
-            images.value.push({
-              id,
-              url: e.target?.result as string
+        try {
+          // 使用uploadImages服务上传图片
+          const response = await uploadImages(allowedFiles);
+          
+          if (response.code === 0 && response.data.length > 0) {
+            // 将上传成功的图片添加到images数组
+            response.data.forEach(imgData => {
+              images.value.push({
+                id: imgData.filename,
+                url: imgData.url
+              });
             });
-          };
-          reader.readAsDataURL(file);
-        });
+          } else {
+            console.error('上传图片失败:', response.msg);
+            alert('上传图片失败，请重试');
+          }
+        } catch (error) {
+          console.error('上传图片失败:', error);
+          alert('上传图片失败，请重试');
+        }
         
         // 重置文件输入，以便可以上传相同的文件
         target.value = '';
@@ -440,59 +449,98 @@ export default defineComponent({
     const publishMoment = async () => {
       if (!canPublish.value || isPublishing.value) return;
       
+      // 如果用户未登录，提示登录
+      if (!userStore.currentUser) {
+        alert('请先登录后再发布内容');
+        return;
+      }
+      
       isPublishing.value = true;
       
       try {
-        // 模拟API调用延迟
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // 将新发布的沸点添加到列表前面
-        const newMoment = {
-          username: '当前用户',
-          avatar: '/default-avatar.png',
-          time: '刚刚',
-          content: content.value,
-          images: images.value.map((img) => img.url),
-          topic: selectedTopic.value || (currentCircleName.value ? currentCircleName.value : ''),
-          likes: 0,
-          comments: 0,
-          circleId: props.filter.circleId || 0
+        // 准备发布参数
+        const params = {
+          content: content.value.trim(),
+          images: images.value.map(img => img.url),
+          // 如果有选择话题或当前在某个圈子中，添加话题标签
+          ...(selectedTopic.value ? { topic: selectedTopic.value } : {}),
+          ...(props.filter.circleId && props.filter.circleId > 0 ? { circleId: props.filter.circleId } : {})
         };
         
-        momentItems.value.unshift(newMoment);
+        // 调用API发布动态
+        const response = await createMoment(params);
         
-        // 重置表单并折叠发布区域
-        resetForm();
-        isPublishAreaExpanded.value = false;
+        if (response.code === 0) {
+          // 发布成功，重置表单并折叠发布区域
+          resetForm();
+          isPublishAreaExpanded.value = false;
+          
+          // 重新加载动态列表
+          loadMoments();
+        } else {
+          console.error('发布动态失败:', response.msg);
+          alert(`发布失败: ${response.msg || '未知错误'}`);
+        }
       } catch (error) {
-        console.error('发布沸点失败:', error);
+        console.error('发布动态失败:', error);
+        alert('发布失败，请重试');
       } finally {
         isPublishing.value = false;
       }
     };
 
-    // 监听过滤器变化，加载对应圈子信息
+    // 监听过滤器变化，加载对应圈子信息和动态
     watch(() => props.filter, (newFilter) => {
       console.log('过滤器变更:', newFilter);
       // 获取圈子信息
       fetchCircleInfo();
       
-      // 这里可以调用API获取不同圈子或排序方式的数据
+      // 加载新的动态数据
       if (newFilter.orderBy) {
         activeTab.value = newFilter.orderBy;
       }
       
-      loading.value = true;
-      setTimeout(() => {
-        loading.value = false;
-      }, 500);
+      loadMoments();
     }, { deep: true });
     
     onMounted(() => {
       fetchCircleInfo();
+      loadMoments();
     });
 
+    // 显示发布对话框
+    const showPublishDialog = () => {
+      // 检查用户是否已登录
+      if (!userStore.currentUser) {
+        alert('请先登录后再发布内容');
+        return;
+      }
+      
+      showDialog.value = true;
+    };
+    
+    // 关闭发布对话框
+    const closePublishDialog = () => {
+      showDialog.value = false;
+    };
+    
+    // 处理发布成功事件
+    const handlePublishSuccess = (momentData: any) => {
+      console.log('发布成功:', momentData);
+      // 重新加载动态列表
+      loadMoments();
+    };
+    
+    // 清除圈子筛选
+    const clearCircleFilter = () => {
+      // 发出事件，通知父组件清除圈子选择
+      activeTab.value = 'latest';
+      // 可以通过router或者其他方式更新URL
+      loadMoments();
+    };
+
     return {
+      userStore,
       isPublishAreaExpanded,
       expandPublishArea,
       content,
@@ -517,7 +565,13 @@ export default defineComponent({
       handleFileUpload,
       removeImage,
       selectTopic,
-      publishMoment
+      publishMoment,
+      formatTime,
+      showDialog,
+      showPublishDialog,
+      closePublishDialog,
+      handlePublishSuccess,
+      clearCircleFilter
     };
   }
 });
@@ -917,18 +971,6 @@ export default defineComponent({
   transform: scale(1.03);
 }
 
-.moment-topic {
-  margin-top: 10px;
-}
-
-.topic-tag {
-  color: #1890ff;
-  font-size: 14px;
-  background-color: #e6f7ff;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
 .moment-actions {
   display: flex;
   gap: 20px;
@@ -1004,5 +1046,21 @@ export default defineComponent({
 .empty-icon {
   font-size: 48px;
   margin-bottom: 15px;
+}
+
+.image-item:hover img {
+  transform: scale(1.03);
+}
+
+.moment-topic {
+  margin-top: 10px;
+}
+
+.topic-tag {
+  color: #1890ff;
+  font-size: 14px;
+  background-color: #e6f7ff;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 </style>

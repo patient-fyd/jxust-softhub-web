@@ -1,17 +1,17 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath } from 'url'
-import path from 'path'
+import { fileURLToPath, URL } from 'url'
+import { dirname, resolve } from 'path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// 获取当前文件的目录
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': resolve(__dirname, './src')
     },
     extensions: ['.vue', '.ts', '.js', '.json'],
   },
@@ -20,13 +20,27 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:9000',
+        target: 'http://localhost:9000', // 修改为本地后端API地址
         changeOrigin: true,
-        secure: false
+        secure: false,
+        rewrite: (path) => path
       }
     }
   },
   build: {
     assetsInlineLimit: 10240, // 10KB
   },
+  optimizeDeps: {
+    include: [
+      '@codemirror/state',
+      '@codemirror/view',
+      '@codemirror/language',
+      '@codemirror/commands',
+      '@codemirror/lang-javascript',
+      '@codemirror/lang-python',
+      '@codemirror/lang-cpp',
+      '@codemirror/theme-one-dark',
+      'vue-codemirror'
+    ]
+  }
 })

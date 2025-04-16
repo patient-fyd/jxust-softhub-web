@@ -25,9 +25,9 @@
           </div>
         </div>
 
-        <div class="circle-selector" @click="showTopicSelector = !showTopicSelector">
+        <div class="circle-selector" @click="showCircleSelector = !showCircleSelector">
           <i class="icon-circle"></i>
-          请选择圈子 >
+          {{ selectedCircle ? selectedCircle.name : '请选择圈子' }} >
         </div>
 
         <div class="footer-bar">
@@ -54,12 +54,30 @@
           </div>
           <div class="topic-list">
             <div 
-              v-for="topic in hotTopics" 
-              :key="topic"
+              v-for="topic in topics" 
+              :key="topic.id"
               class="topic-item"
               @click="selectTopic(topic)"
             >
-              <span>#{{ topic }}#</span>
+              <span>#{{ topic.name }}#</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 圈子选择器 -->
+        <div v-if="showCircleSelector" class="topic-selector">
+          <div class="topic-header">
+            <h3>选择圈子</h3>
+            <button class="close-topic" @click="showCircleSelector = false">×</button>
+          </div>
+          <div class="topic-list">
+            <div 
+              v-for="circle in circles" 
+              :key="circle.id"
+              class="topic-item"
+              @click="selectCircle(circle)"
+            >
+              <span>{{ circle.name }}</span>
             </div>
           </div>
         </div>
@@ -80,6 +98,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
+import { createMoment } from '@/services/momentService';
 
 export default defineComponent({
   name: 'PublishMomentDialog',
@@ -89,29 +108,42 @@ export default defineComponent({
       default: false
     }
   },
-  emits: ['close', 'publish-moment'],
+  emits: ['close', 'publish-success'],
   setup(props, { emit }) {
     const content = ref('');
     const images = ref<{ id: string; url: string }[]>([]);
     const selectedTopic = ref('');
+    const selectedTopicId = ref<number | undefined>(undefined);
     const showTopicSelector = ref(false);
+    const showCircleSelector = ref(false);
     const isPublishing = ref(false);
     const textareaRef = ref<HTMLTextAreaElement | null>(null);
     const fileInputRef = ref<HTMLInputElement | null>(null);
+    const selectedCircle = ref<{ id: number, name: string } | null>(null);
     
     // 热门话题示例数据
-    const hotTopics = ref([
-      '新人报道',
-      'Vue3学习',
-      'TypeScript',
-      '程序员生活',
-      '前端日常',
-      '面试经验',
-      '技术分享',
-      '项目实战',
-      '源码解析',
-      '算法学习',
-      '开发工具'
+    const topics = ref([
+      { id: 1, name: '新人报道' },
+      { id: 2, name: 'Vue3学习' },
+      { id: 3, name: 'TypeScript' },
+      { id: 4, name: '程序员生活' },
+      { id: 5, name: '前端日常' },
+      { id: 6, name: '面试经验' },
+      { id: 7, name: '技术分享' },
+      { id: 8, name: '项目实战' },
+      { id: 9, name: '源码解析' },
+      { id: 10, name: '算法学习' },
+      { id: 11, name: '开发工具' }
+    ]);
+
+    // 圈子示例数据
+    const circles = ref([
+      { id: 1, name: '前端圈' },
+      { id: 2, name: '后端圈' },
+      { id: 3, name: '算法圈' },
+      { id: 4, name: '测试圈' },
+      { id: 5, name: '产品圈' },
+      { id: 6, name: '设计圈' }
     ]);
     
     // 判断是否可以发布
@@ -169,41 +201,74 @@ export default defineComponent({
     };
     
     // 选择话题
-    const selectTopic = (topic: string) => {
-      selectedTopic.value = topic;
+    const selectTopic = (topic: { id: number, name: string }) => {
+      selectedTopic.value = topic.name;
+      selectedTopicId.value = topic.id;
       showTopicSelector.value = false;
     };
+
+    // 选择圈子
+    const selectCircle = (circle: { id: number, name: string }) => {
+      selectedCircle.value = circle;
+      showCircleSelector.value = false;
+    };
     
-    // 发布沸点
+    // 发布动态
     const publishMoment = async () => {
       if (!canPublish.value || isPublishing.value) return;
       
       isPublishing.value = true;
       
       try {
-        // 这里将来可以集成实际的API调用
-        const momentData = {
+        // 收集图片URL数组
+        const imageUrls = images.value.map(img => img.url);
+        
+        // 构建发布参数，处理topicId
+        const params: any = {
           content: content.value,
-          images: images.value,
-          topic: selectedTopic.value
+          images: imageUrls
         };
         
-        // 模拟API调用延迟
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 只在有效选择话题时添加topicId
+        if (selectedTopicId.value && selectedTopicId.value > 0) {
+          params.topicId = selectedTopicId.value;
+        }
         
-        // 发布成功后发出事件
-        emit('publish-moment', momentData);
+        // 只在有效选择圈子时添加circleId
+        if (selectedCircle.value && selectedCircle.value.id > 0) {
+          params.circleId = selectedCircle.value.id;
+        }
         
-        // 重置表单
-        content.value = '';
-        images.value = [];
-        selectedTopic.value = '';
+        // 调用API发布动态
+        const result = await createMoment(params);
         
-        // 关闭对话框
-        closeDialog();
+        if (result.code === 0) {
+          alert('发布成功');
+          
+          // 发布成功后发出事件
+          emit('publish-success', {
+            momentId: result.data.momentId,
+            content: content.value,
+            images: imageUrls,
+            topic: selectedTopic.value,
+            circleId: selectedCircle.value?.id
+          });
+          
+          // 重置表单
+          content.value = '';
+          images.value = [];
+          selectedTopic.value = '';
+          selectedTopicId.value = undefined;
+          selectedCircle.value = null;
+          
+          // 关闭对话框
+          closeDialog();
+        } else {
+          alert(`发布失败: ${result.msg}`);
+        }
       } catch (error) {
-        console.error('发布沸点失败:', error);
-        // 这里可以添加错误处理逻辑
+        console.error('发布动态失败:', error);
+        alert('发布失败，请稍后重试');
       } finally {
         isPublishing.value = false;
       }
@@ -221,17 +286,21 @@ export default defineComponent({
       images,
       selectedTopic,
       showTopicSelector,
+      showCircleSelector,
       isPublishing,
-      hotTopics,
+      topics,
+      circles,
       textareaRef,
       fileInputRef,
       canPublish,
+      selectedCircle,
       closeDialog,
       adjustTextareaHeight,
       triggerImageUpload,
       handleFileUpload,
       removeImage,
       selectTopic,
+      selectCircle,
       publishMoment
     };
   }

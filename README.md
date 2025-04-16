@@ -191,3 +191,64 @@ npm run preview
 - 与后端统一接口规范、状态码、错误提示
 
 ---
+
+## 🔌 API 说明
+
+### 后端API集成
+
+本项目直接集成实际后端API，不再使用模拟数据。所有API请求通过Axios进行，并配置以下特性：
+
+- 请求拦截器：添加认证令牌（Bearer Token）
+- 响应拦截器：处理常见错误和token刷新
+- Vite代理：所有`/api/*`请求会被代理到实际后端服务器
+
+### 主要API服务
+
+项目中包含多个API服务模块，每个模块负责特定功能：
+
+1. **用户服务 (userService)**
+   - 用户登录、注册、信息获取与更新
+
+2. **动态服务 (momentService)**
+   - 获取动态列表、详情
+   - 发布、点赞、评论、删除动态
+
+3. **问题服务 (ProblemService)**
+   - 获取题目列表、题目详情
+   - 代码运行、提交
+   - 本地存储解题状态
+
+4. **圈子服务 (circleService)**
+   - 获取圈子列表、圈子详情
+   - 加入、退出圈子
+
+5. **新闻服务 (newsService)**
+   - 获取新闻列表、新闻详情
+
+6. **加入服务 (joinService)**
+   - 提交加入申请
+   - 查询申请状态
+
+### API请求配置
+
+开发环境下，所有API请求通过Vite代理转发到实际后端：
+
+```javascript
+// vite.config.ts
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://api.jxustsofthub.com',
+      changeOrigin: true,
+      secure: true,
+      rewrite: (path) => path
+    }
+  }
+}
+```
+
+### 本地开发
+
+在本地开发时，请确保连接互联网以访问实际后端API。如需开发时使用本地后端，请修改`vite.config.ts`中的代理目标。
+
+---

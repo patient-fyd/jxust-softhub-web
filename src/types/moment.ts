@@ -13,6 +13,7 @@ export interface Moment {
   isLiked?: boolean;
   createTime: string;
   updateTime?: string;
+  topic?: string;
 }
 
 /**
@@ -21,6 +22,9 @@ export interface Moment {
 export interface CreateMomentParams {
   content: string;
   images?: string[];
+  topic?: string;
+  topicId?: number;
+  circleId?: number;
 }
 
 /**
