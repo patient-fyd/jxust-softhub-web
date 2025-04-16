@@ -14,74 +14,65 @@
     </div>
 
     <!-- 搜索和筛选区域 -->
-    <div class="search-filter-container">
-      <div class="search-box">
-        <div class="search-input-wrapper">
-          <Icon icon="mdi:magnify" class="search-icon" />
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-input-group">
           <input
             type="text"
             v-model="searchQuery"
-            placeholder="搜索资源名称、描述或标签"
+            placeholder="搜索内容..."
             class="search-input"
             @keyup.enter="handleSearch"
-          >
-          <button class="search-button" @click="handleSearch">搜索</button>
+          />
+          <button class="search-button" @click="handleSearch">
+            <Icon icon="mdi:magnify" class="search-icon" />
+            搜索
+          </button>
         </div>
-      </div>
+        
+        <select
+          v-model="filters.categoryId"
+          class="filter-select"
+          @change="handleFilterChange"
+        >
+          <option value="">全部分类</option>
+          <option
+            v-for="category in categories"
+            :key="category.id"
+            :value="category.id"
+          >
+            {{ category.name }}
+          </option>
+        </select>
 
-      <div class="filter-container">
-        <!-- 分类筛选 -->
-        <div class="filter-item">
-          <select
-            v-model="filters.categoryId"
-            class="filter-select"
-            @change="handleFilterChange"
+        <select
+          v-model="filters.fileType"
+          class="filter-select"
+          @change="handleFilterChange"
+        >
+          <option value="">文件类型</option>
+          <option
+            v-for="type in fileTypes"
+            :key="type.value"
+            :value="type.value"
           >
-            <option value="">全部分类</option>
-            <option
-              v-for="category in categories"
-              :key="category.id"
-              :value="category.id"
-            >
-              {{ category.name }}
-            </option>
-          </select>
-        </div>
+            {{ type.label }}
+          </option>
+        </select>
 
-        <!-- 文件类型筛选 -->
-        <div class="filter-item">
-          <select
-            v-model="filters.fileType"
-            class="filter-select"
-            @change="handleFilterChange"
+        <select
+          v-model="filters.sortBy"
+          class="filter-select"
+          @change="handleFilterChange"
+        >
+          <option
+            v-for="option in sortOptions"
+            :key="option.value"
+            :value="option.value"
           >
-            <option value="">文件类型</option>
-            <option
-              v-for="type in fileTypes"
-              :key="type.value"
-              :value="type.value"
-            >
-              {{ type.label }}
-            </option>
-          </select>
-        </div>
-
-        <!-- 排序方式 -->
-        <div class="filter-item">
-          <select
-            v-model="filters.sortBy"
-            class="filter-select"
-            @change="handleFilterChange"
-          >
-            <option
-              v-for="option in sortOptions"
-              :key="option.value"
-              :value="option.value"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-        </div>
+            {{ option.label }}
+          </option>
+        </select>
       </div>
     </div>
 
@@ -104,7 +95,7 @@
     <!-- 资源列表 -->
     <div v-if="loading" class="loading-container">
       <div class="loading-skeleton">
-        <div v-for="i in 8" :key="i" class="skeleton-card">
+        <div v-for="i in 12" :key="i" class="skeleton-card">
           <div class="skeleton-image"></div>
           <div class="skeleton-content">
             <div class="skeleton-title"></div>
@@ -956,103 +947,79 @@ export default defineComponent({
 }
 
 /* 搜索和筛选 */
-.search-filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 16px;
+.search-area {
+  margin-bottom: 20px;
 }
 
-.search-box {
-  flex: 1;
-  min-width: 300px;
-}
-
-.search-input-wrapper {
-  display: flex;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-/* 搜索图标样式 */
-.search-icon {
+.search-row {
   display: flex;
   align-items: center;
-  padding: 0 10px;
-  color: #909399;
+  gap: 16px;
+  width: 100%;
 }
 
 .search-input {
   flex: 1;
-  border: none;
-  padding: 10px;
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid #e0e0e0;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
   outline: none;
   font-size: 14px;
+  background-color: #f5f7fa;
 }
 
 .search-button {
-  background-color: #409eff;
+  height: 44px;
+  width: 170px;
+  background-color: #4790f5;
   color: white;
   border: none;
-  padding: 0 15px;
+  border-radius: 0 8px 8px 0;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.search-button:hover {
-  background-color: #66b1ff;
-}
-
-.filter-container {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-.filter-item {
-  width: 160px;
+.search-icon {
+  font-size: 18px;
 }
 
 .filter-select {
-  width: 100%;
-  height: 40px;
+  height: 44px;
+  width: 150px;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  padding: 0 10px;
-  color: #606266;
-  font-size: 14px;
-  outline: none;
+  border-radius: 8px;
+  padding: 0 30px 0 12px;
+  background-color: white;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23606266'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 16px;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  border-color: #409eff;
 }
 
 /* 标签样式 */
 .tags-container {
-  display: flex;
-  align-items: center;
   margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .tags-label {
   margin-right: 8px;
   color: #666;
   white-space: nowrap;
+  font-size: 14px;
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .tag-item {
@@ -1069,6 +1036,8 @@ export default defineComponent({
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.3s;
+  margin-right: 8px;
+  margin-bottom: 8px;
 }
 
 .tag-item:hover {
@@ -1089,7 +1058,7 @@ export default defineComponent({
 /* 资源列表 */
 .resources-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 28px;
   margin-bottom: 32px;
 }
@@ -1102,8 +1071,8 @@ export default defineComponent({
 
 .loading-skeleton {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
 }
 
 .skeleton-card {
@@ -1472,14 +1441,12 @@ export default defineComponent({
     gap: 16px;
   }
   
-  .search-filter-container {
+  .search-area {
     flex-direction: column;
   }
   
-  .filter-container {
+  .search-row {
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 8px;
   }
   
   .detail-header {
@@ -1497,4 +1464,59 @@ export default defineComponent({
     align-items: flex-start;
   }
 }
-</style> 
+  .search-input-group {
+    display: flex;
+    flex: 1;
+    max-width: 500px;
+    height: 44px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f5f7fa;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 0 16px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    background: transparent;
+  }
+
+  .search-button {
+    width: 100px;
+    border: none;
+    background-color: #409eff;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .filter-select {
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23606266'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+  }
+</style>
