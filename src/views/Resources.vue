@@ -24,10 +24,7 @@
             class="search-input"
             @keyup.enter="handleSearch"
           />
-          <button class="search-button" @click="handleSearch">
-            <Icon icon="mdi:magnify" class="search-icon" />
-            搜索
-          </button>
+          
         </div>
         
         <select
@@ -970,24 +967,6 @@ export default defineComponent({
   background-color: #f5f7fa;
 }
 
-.search-button {
-  height: 44px;
-  width: 170px;
-  background-color: #4790f5;
-  color: white;
-  border: none;
-  border-radius: 0 8px 8px 0;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.search-icon {
-  font-size: 18px;
-}
 
 .filter-select {
   height: 44px;

@@ -10,11 +10,12 @@
                 v-model="searchKeyword" 
                 placeholder="搜索题目..." 
                 class="search-input"
+                @keyup.enter="handleSearch"
               />
               <i class="fas fa-search search-icon"></i>
             </div>
-            <button class="refresh-btn" @click="fetchProblems" title="刷新题目列表">
-              <i class="fas fa-sync-alt"></i>
+            <button class="search-btn" @click="handleSearch" title="搜索题目">
+              <i class="fas fa-search"></i>
             </button>
           </div>
           
@@ -519,6 +520,17 @@ export default defineComponent({
       fetchProblems();
     });
     
+    // 处理搜索
+    const handleSearch = () => {
+      // 如果搜索框为空且没有其他筛选条件，则刷新题目列表
+      if (searchKeyword.value.trim() === '' && 
+          selectedDifficulty.value === '' && 
+          selectedTags.value.length === 0) {
+        fetchProblems();
+      }
+      // 否则不做其他操作，让筛选逻辑生效
+    };
+    
     return {
       loading,
       problems,
@@ -529,7 +541,8 @@ export default defineComponent({
       recentSolvedProblems,
       toggleTag,
       resetFilters,
-      fetchProblems
+      fetchProblems,
+      handleSearch
     };
   }
 });
@@ -680,30 +693,12 @@ export default defineComponent({
   color: white;
 }
 
-.refresh-btn {
-  min-width: 50px;
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background-color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  color: #4785ff;
-  cursor: pointer;
-  transition: all 0.2s;
-  z-index: 10;
-  position: relative;
-}
-
-.refresh-btn:hover {
+.search-btn:hover {
   background-color: #f0f5ff;
   border-color: #4785ff;
 }
 
-.refresh-btn:active {
+.search-btn:active {
   transform: scale(0.95);
 }
 
