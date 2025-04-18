@@ -54,7 +54,8 @@ export default defineConfig({
       '@codemirror/lang-python',
       '@codemirror/lang-cpp',
       '@codemirror/theme-one-dark',
-      'vue-codemirror'
+      'vue-codemirror',
+      'prismjs'
     ]
   }
 })

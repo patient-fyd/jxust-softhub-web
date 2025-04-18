@@ -294,8 +294,22 @@ import { defineComponent, ref, computed, onMounted, watch, onBeforeUnmount, next
 import { useRoute, useRouter } from 'vue-router';
 import { blogService, type Blog, type BlogComment } from '../services/blogService';
 import { useUserStore } from '../stores/userStore';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/github.css'; // 可以选择不同的样式
+import Prism from 'prismjs/components/prism-core';           // 核心
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/themes/prism.css';
+import 'prismjs/components/prism-markup';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-python';
+import 'prismjs/plugins/line-numbers/prism-line-numbers';    // 行号插件
+import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
+import 'prismjs/plugins/toolbar/prism-toolbar';              // 工具栏（含复制按钮）
+import 'prismjs/plugins/toolbar/prism-toolbar.css';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 
 export default defineComponent({
   name: 'BlogDetail',
@@ -375,6 +389,11 @@ export default defineComponent({
           // 获取相关内容
           loadComments();
           generateToc();
+          
+          // 确保博客内容渲染后再应用代码高亮
+          nextTick(() => {
+            applyHighlight();
+          });
         } else {
           error.value = response.msg || '未找到博客详情';
           console.error('博客详情API返回错误:', response);
@@ -945,6 +964,24 @@ export default defineComponent({
       handleWindowScroll();
     });
 
+    // 应用代码高亮的函数
+    const applyHighlight = () => {
+      console.log('Prism对象:', Prism);
+      
+      // 确保Prism对象存在且有highlightAll方法
+      if (Prism && typeof Prism.highlightAll === 'function') {
+        try {
+          // 调用Prism的高亮方法
+          Prism.highlightAll();
+          console.log('已应用代码高亮');
+        } catch (error) {
+          console.error('应用代码高亮失败:', error);
+        }
+      } else {
+        console.error('Prism.highlightAll方法不存在');
+      }
+    };
+
     // 格式化内容，添加ID到标题
     const formatContent = (content: string) => {
       if (!content) return '';
@@ -966,27 +1003,10 @@ export default defineComponent({
         .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
         // 处理图片 - 添加懒加载属性
         .replace(/!\[(.+?)\]\((.+?)\)/g, '<img loading="lazy" src="$2" alt="$1" />')
-        // 处理代码块 - 支持语言标记
+        // 处理代码块 - 支持语言标记，修改为Prism兼容的格式
         .replace(/```(\w*)\s*([\s\S]+?)```/g, (match, lang, code) => {
           const language = lang || 'plaintext';
-          let highlightedCode;
-          
-          try {
-            highlightedCode = language ? 
-              hljs.highlight(code.trim(), { language }).value :
-              hljs.highlightAuto(code.trim()).value;
-          } catch (e) {
-            console.warn(`语言 ${language} 高亮失败，使用自动检测`);
-            highlightedCode = hljs.highlightAuto(code.trim()).value;
-          }
-          
-          return `<div class="code-block">
-            <div class="code-header">
-              <span>${language}</span>
-              <button class="copy-btn" onclick="navigator.clipboard.writeText(\`${code.trim().replace(/`/g, '\\`')}\`)">复制</button>
-            </div>
-            <pre><code class="hljs language-${language}">${highlightedCode}</code></pre>
-          </div>`;
+          return `<pre class="line-numbers language-${language}"><code class="language-${language}">${code.trim()}</code></pre>`;
         })
         // 处理行内代码
         .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
@@ -1708,6 +1728,7 @@ export default defineComponent({
     margin-top: 0; /* 移除顶部间距，使用父元素的gap控制 */
   }
 }
+
 </style>
 
 <style>
@@ -1858,45 +1879,7 @@ export default defineComponent({
   background-color: #e5e7eb;
 }
 
-/* 代码块样式 */
-.code-block {
-  margin: 1.5rem 0;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
 
-.code-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f1f5f9;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.copy-btn {
-  background-color: transparent;
-  border: 1px solid #cbd5e1;
-  color: #64748b;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.copy-btn:hover {
-  background-color: #f8fafc;
-  color: #3b82f6;
-  border-color: #3b82f6;
-}
-
-.hljs {
-  background: #f8fafc;
-  padding: 1rem;
-  border-radius: 0 0 8px 8px;
-}
 
 .inline-code {
   padding: 0.15rem 0.4rem;
@@ -1977,4 +1960,23 @@ export default defineComponent({
   line-height: 1.8;
   color: #374151;
 }
+
+
+  pre[class*="language-"] {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    tab-size: 2;
+  }
+  
+  code[class*="language-"] {
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+  }
 </style>
