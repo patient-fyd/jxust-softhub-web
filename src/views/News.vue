@@ -30,17 +30,23 @@
     </div>
     
     <div v-else class="news-list">
-      <div v-for="news in newsList" :key="news.newsId" class="news-card">
-        <div class="news-image" :style="news.coverImage ? `background-image: url(${news.coverImage})` : ''"></div>
+      <div v-for="news in newsList" :key="news.id" class="news-card">
+        <div class="news-image" :style="news.coverImage ? `background-image: url(${news.coverImage})` : ''">
+          <div v-if="news.newsType" class="news-type-tag" :class="getNewsTypeClass(news.newsType)">
+            {{ getNewsTypeLabel(news.newsType) }}
+          </div>
+        </div>
         <div class="news-content">
           <div class="news-meta">
-            <span class="news-date">{{ formatDate(news.createTime) }}</span>
+            <span class="news-date">{{ formatDate(news.createdAt || news.createTime) }}</span>
             <span class="news-views">浏览: {{ news.viewCount }}</span>
           </div>
-          <h2 class="news-title">{{ news.title }}</h2>
+          <h2 class="news-title">
+            <router-link :to="`/news/detail?newsId=${news.id}`">{{ news.title }}</router-link>
+          </h2>
           <p class="news-excerpt">{{ getExcerpt(news.content) }}</p>
           <div class="news-footer">
-            <router-link :to="`/news/${news.newsId}`" class="read-more-btn">阅读全文</router-link>
+            <router-link :to="`/news/detail?newsId=${news.id}`" class="read-more-btn">阅读全文</router-link>
             <span v-if="news.authorName" class="news-author">作者: {{ news.authorName }}</span>
           </div>
         </div>
@@ -94,6 +100,7 @@ export default defineComponent({
     const pageSize = ref(9);
     const totalItems = ref(0);
     const currentCategory = ref('all');
+    const currentNewsType = ref<number | null>(null);
     
     // 计算总页数
     const totalPages = computed(() => {
@@ -106,6 +113,30 @@ export default defineComponent({
       return category ? category.label : '内容';
     };
     
+    // 获取新闻类型标签
+    const getNewsTypeLabel = (type: number) => {
+      switch (type) {
+        case 1:
+          return '通知';
+        case 2:
+          return '博客';
+        default:
+          return '未知';
+      }
+    };
+    
+    // 获取新闻类型CSS类
+    const getNewsTypeClass = (type: number) => {
+      switch (type) {
+        case 1:
+          return 'news-type-notification';
+        case 2:
+          return 'news-type-blog';
+        default:
+          return '';
+      }
+    };
+    
     // 加载新闻列表
     const loadNews = async () => {
       loading.value = true;
@@ -114,12 +145,18 @@ export default defineComponent({
       try {
         const params: any = {
           page: currentPage.value,
-          pageSize: pageSize.value
+          pageSize: pageSize.value,
+          status: 1 // 只获取已发布的新闻
         };
         
         // 如果不是全部类别，则添加类别筛选
         if (currentCategory.value !== 'all') {
           params.category = currentCategory.value;
+        }
+        
+        // 如果指定了新闻类型，则添加类型筛选
+        if (currentNewsType.value !== null) {
+          params.newsType = currentNewsType.value;
         }
         
         const response = await newsService.getNewsList(params);
@@ -143,6 +180,16 @@ export default defineComponent({
       if (currentCategory.value !== category) {
         currentCategory.value = category;
         currentPage.value = 1; // 切换类别时重置页码
+        
+        // 根据类别设置新闻类型
+        if (category === '技术分享') {
+          currentNewsType.value = 2; // 技术博客
+        } else if (category === '协会公告' || category === '活动通知') {
+          currentNewsType.value = 1; // 协会通知
+        } else {
+          currentNewsType.value = null; // 全部类型
+        }
+        
         loadNews();
       }
     };
@@ -176,8 +223,23 @@ export default defineComponent({
         const category = String(newQuery.category);
         if (categories.some(c => c.value === category)) {
           currentCategory.value = category;
+          
+          // 设置对应的新闻类型
+          if (category === '技术分享') {
+            currentNewsType.value = 2; // 技术博客
+          } else if (category === '协会公告' || category === '活动通知') {
+            currentNewsType.value = 1; // 协会通知
+          } else {
+            currentNewsType.value = null; // 全部类型
+          }
         }
       }
+      
+      // 如果URL中有newsType参数，则设置对应的新闻类型
+      if (newQuery.newsType) {
+        currentNewsType.value = Number(newQuery.newsType);
+      }
+      
       loadNews();
     }, { immediate: true });
     
@@ -188,12 +250,27 @@ export default defineComponent({
         const category = String(route.query.category);
         if (categories.some(c => c.value === category)) {
           currentCategory.value = category;
+          
+          // 设置对应的新闻类型
+          if (category === '技术分享') {
+            currentNewsType.value = 2; // 技术博客
+          } else if (category === '协会公告' || category === '活动通知') {
+            currentNewsType.value = 1; // 协会通知
+          } else {
+            currentNewsType.value = null; // 全部类型
+          }
         }
+      }
+      
+      // 如果URL中有newsType参数，则设置对应的新闻类型
+      if (route.query.newsType) {
+        currentNewsType.value = Number(route.query.newsType);
       }
       
       // 如果从博客页面跳转过来，默认显示技术博客类别
       if (route.query.from === 'blog') {
         currentCategory.value = '技术分享';
+        currentNewsType.value = 2; // 技术博客
       }
       
       loadNews();
@@ -208,6 +285,8 @@ export default defineComponent({
       totalPages,
       currentCategory,
       getCategoryLabel,
+      getNewsTypeLabel,
+      getNewsTypeClass,
       loadNews,
       changeCategory,
       changePage,
@@ -305,6 +384,26 @@ export default defineComponent({
   background-color: #f3f4f6;
   background-size: cover;
   background-position: center;
+  position: relative;
+}
+
+.news-type-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.news-type-notification {
+  background-color: #1e40af;
+}
+
+.news-type-blog {
+  background-color: #10b981;
 }
 
 .news-content {

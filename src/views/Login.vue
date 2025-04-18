@@ -56,6 +56,7 @@
         
         isLoading.value = true;
         try {
+          console.log('尝试登录...');
           const result = await userStore.login({
             userName: username.value,
             password: password.value
@@ -63,12 +64,30 @@
           
           if (result.success) {
             // 登录成功，跳转到首页
+            console.log('登录成功，准备跳转');
             router.push('/');
           } else {
             loginError.value = result.error || '登录失败，请检查用户名和密码';
+            console.error('登录结果错误:', result.error);
           }
         } catch (error: any) {
-          loginError.value = error.message || '登录过程中发生错误';
+          console.error('登录过程异常:', error);
+          
+          // 检查是否为网络错误
+          if (error.message && error.message.includes('Network Error')) {
+            loginError.value = '网络连接错误，请检查您的网络连接或服务器状态';
+          } else if (error.response) {
+            // 服务器返回了错误状态码
+            if (error.response.status === 404) {
+              loginError.value = '登录服务不可用 (404)，请联系管理员';
+            } else if (error.response.status === 401) {
+              loginError.value = '用户名或密码错误';
+            } else {
+              loginError.value = `服务器错误 (${error.response.status}): ${error.response.data?.msg || '未知错误'}`;
+            }
+          } else {
+            loginError.value = error.message || '登录过程中发生未知错误';
+          }
         } finally {
           isLoading.value = false;
         }

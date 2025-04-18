@@ -2,7 +2,7 @@
   <div class="blog-list">
     <blog-card 
       v-for="blog in blogs" 
-      :key="blog.newsId" 
+      :key="blog.blogId || blog.id" 
       :blog="blog"
     />
   </div>
@@ -12,6 +12,7 @@
 import { defineComponent } from 'vue';
 import BlogCard from './BlogCard.vue';
 import type { News } from '../../services/newsService';
+import type { Blog } from '../../services/blogService';
 
 export default defineComponent({
   name: 'BlogList',
@@ -20,7 +21,7 @@ export default defineComponent({
   },
   props: {
     blogs: {
-      type: Array as () => News[],
+      type: Array as () => (Blog | News)[],
       required: true
     }
   }

@@ -6,11 +6,13 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,  // 设置请求超时时间为10秒
 });
 
 // 请求拦截器 - 添加认证令牌
 apiClient.interceptors.request.use(
   (config) => {
+    console.log(`[API] 发送请求: ${config.method?.toUpperCase()} ${config.url}`);
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -18,14 +20,24 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('[API] 请求配置错误:', error);
     return Promise.reject(error);
   }
 );
 
 // 响应拦截器 - 处理常见错误和token刷新
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // 记录响应状态
+    console.log(`[API] 收到响应: ${response.status} ${response.config.url}`);
+    return response;
+  },
   async (error) => {
+    // 详细记录错误信息
+    console.error('[API] 请求错误:', error.response?.status || '网络错误', 
+                  error.config?.url || '未知URL',
+                  error.message);
+    
     const originalRequest = error.config;
     
     // 如果是401错误（未授权）且不是刷新token的请求，尝试刷新token
@@ -57,13 +69,12 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Token刷新失败:', refreshError);
+        console.error('[API] Token刷新失败:', refreshError);
         // 可能需要重定向到登录页面
         // window.location.href = '/login';
       }
     }
     
-    console.error('API请求错误:', error.response || error.message);
     return Promise.reject(error);
   }
 );

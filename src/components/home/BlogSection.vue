@@ -2,7 +2,7 @@
   <div class="blog-section">
     <div class="section-header">
       <h2>最新技术博客</h2>
-      <router-link to="/news?category=技术分享&from=blog" class="view-all">查看全部</router-link>
+      <router-link to="/blog" class="view-all">查看全部</router-link>
     </div>
     <div v-if="loading" class="loading-blogs">
       <p>加载中...</p>
@@ -14,13 +14,25 @@
       <p>暂无技术博客</p>
     </div>
     <div v-else class="blog-cards">
-      <div v-for="blog in blogs" :key="blog.newsId" class="blog-card">
-        <div class="blog-image" :style="blog.coverImage ? `background-image: url(${blog.coverImage})` : ''"></div>
+      <div v-for="blog in blogs" :key="blog.blogId || blog.id" class="blog-card">
+        <div class="blog-image" :style="blog.coverImage ? `background-image: url(${blog.coverImage})` : ''">
+          <div class="blog-type-tag">技术分享</div>
+        </div>
         <div class="blog-content">
-          <div class="blog-date">{{ formatDate(blog.createTime) }}</div>
+          <div class="blog-meta">
+            <span class="blog-date">{{ formatDate(blog.createTime || blog.createdAt) }}</span>
+            <span class="blog-views">浏览: {{ blog.viewCount }}</span>
+          </div>
           <h3>{{ blog.title }}</h3>
           <p>{{ getExcerpt(blog.content) }}</p>
-          <router-link :to="`/news/${blog.newsId}`" class="read-more">阅读更多</router-link>
+          <div class="blog-footer">
+            <button 
+              v-if="blog.blogId" 
+              @click="navigateToBlogDetail(blog.blogId)"
+              class="read-more">阅读更多</button>
+            <span v-else class="read-more disabled">暂无详情</span>
+            <span v-if="blog.authorName" class="blog-author">{{ blog.authorName }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -30,7 +42,8 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
 import type { PropType } from 'vue';
-import { newsService, type News } from '../../services/newsService';
+import { blogService, type Blog } from '../../services/blogService';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: 'BlogSection',
@@ -41,25 +54,37 @@ export default defineComponent({
     }
   },
   setup(props) {
-    const blogs = ref<News[]>([]);
+    const blogs = ref<Blog[]>([]);
     const loading = ref(true);
     const error = ref('');
+    const router = useRouter();
     
-    // 获取最新技术博客
+    // 获取最新技术博客 - 只使用博客API
     const fetchLatestBlogs = async () => {
       loading.value = true;
       error.value = '';
       
       try {
-        const response = await newsService.getBlogList({
+        // 使用专用博客API
+        const blogResponse = await blogService.getBlogList({
           page: 1,
-          pageSize: props.maxBlogs // 只获取指定数量的最新博客
+          size: props.maxBlogs,
+          status: 1 // 只获取已发布的
         });
         
-        if (response.code === 0) {
-          blogs.value = response.data.list;
+        if (blogResponse.code === 0) {
+          // 确保所有博客都有blogId字段
+          const blogList = blogResponse.data.list || [];
+          blogList.forEach(blog => {
+            if (!blog.blogId && blog.id) {
+              console.log(`处理博客数据: 将id(${blog.id})复制到blogId字段`);
+              blog.blogId = blog.id;
+            }
+          });
+          
+          blogs.value = blogList;
         } else {
-          error.value = response.msg || '获取博客列表失败';
+          error.value = '获取博客列表失败';
         }
       } catch (err) {
         console.error('获取博客列表出错:', err);
@@ -71,15 +96,26 @@ export default defineComponent({
     
     // 格式化日期
     const formatDate = (dateStr: string) => {
+      if (!dateStr) return '';
       const date = new Date(dateStr);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
     
     // 获取内容摘要
     const getExcerpt = (content: string) => {
-      // 移除Markdown标记
-      const plainText = content.replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
+      if (!content) return '';
+      // 移除HTML标签和Markdown标记
+      const plainText = content.replace(/<[^>]+>/g, '').replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
       return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+    };
+    
+    // 导航到博客详情页
+    const navigateToBlogDetail = (blogId: number) => {
+      console.log('导航到博客详情页:', blogId);
+      router.push({
+        path: '/blog/detail',
+        query: { blogId: blogId.toString() }
+      });
     };
     
     onMounted(() => {
@@ -91,7 +127,8 @@ export default defineComponent({
       loading,
       error,
       formatDate,
-      getExcerpt
+      getExcerpt,
+      navigateToBlogDetail
     };
   }
 });
@@ -153,16 +190,37 @@ export default defineComponent({
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  position: relative;
+}
+
+.blog-type-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #10b981;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .blog-content {
   padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.blog-date {
+.blog-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.blog-date, .blog-views {
   color: #6b7280;
   font-size: 0.9rem;
-  margin-bottom: 10px;
 }
 
 .blog-card h3 {
@@ -181,6 +239,39 @@ export default defineComponent({
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
+}
+
+.blog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.read-more {
+  color: #1e40af;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  padding: 5px 10px;
+  background-color: #e0e7ff;
+  border-radius: 4px;
+}
+
+.read-more:hover {
+  background-color: #c7d2fe;
+}
+
+.read-more.disabled {
+  background-color: #e0e0e0;
+  color: #909090;
+  cursor: not-allowed;
+}
+
+.blog-author {
+  color: #6b7280;
+  font-size: 0.9rem;
 }
 
 .loading-blogs, .blog-error, .no-blogs {

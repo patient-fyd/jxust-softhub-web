@@ -13,15 +13,32 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/News.vue')
   },
   {
-    path: '/blog',
-    name: 'Blog',
-    redirect: '/news?category=技术分享&from=blog'
+    path: '/news/detail',
+    name: 'NewsDetail',
+    component: () => import('../views/NewsDetail.vue')
   },
+  // 兼容旧路径，重定向到查询参数方式
   {
     path: '/news/:id',
-    name: 'NewsDetail',
-    component: () => import('../views/News.vue'),
-    props: true
+    redirect: to => {
+      return { path: '/news/detail', query: { newsId: to.params.id } }
+    }
+  },
+  {
+    path: '/blog',
+    name: 'Blog',
+    component: () => import('../views/Blog.vue')
+  },
+  {
+    path: '/blog/detail',
+    name: 'BlogDetail',
+    component: () => import('../views/BlogDetail.vue')
+  },
+  {
+    path: '/blog/:id',
+    redirect: to => {
+      return { path: '/blog/detail', query: { blogId: to.params.id } }
+    }
   },
   {
     path: '/activities',
@@ -134,6 +151,31 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// 全局导航守卫
+router.beforeEach((to, from, next) => {
+  // 处理博客详情页面的特殊情况
+  if (to.path === '/blog/detail') {
+    const blogId = to.query.blogId;
+    if (!blogId || blogId === 'undefined' || blogId === 'null' || blogId === 'NaN') {
+      console.warn('检测到无效的博客ID:', blogId);
+      next({ name: 'Blog' }); // 重定向到博客列表页
+      return;
+    }
+  }
+  
+  // 处理新闻详情页面的特殊情况
+  if (to.path === '/news/detail') {
+    const newsId = to.query.newsId;
+    if (!newsId || newsId === 'undefined' || newsId === 'null' || newsId === 'NaN') {
+      console.warn('检测到无效的新闻ID:', newsId);
+      next({ name: 'News' }); // 重定向到新闻列表页
+      return;
+    }
+  }
+  
+  next();
 })
 
 export default router

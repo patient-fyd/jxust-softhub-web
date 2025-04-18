@@ -9,7 +9,11 @@
       <h2 class="blog-title">{{ blog.title }}</h2>
       <p class="blog-excerpt">{{ getExcerpt(blog.content) }}</p>
       <div class="blog-footer">
-        <router-link :to="`/news/${blog.newsId}`" class="read-more-btn">阅读全文</router-link>
+        <router-link 
+          v-if="blog.blogId"
+          :to="`/blog/detail?blogId=${blog.blogId}`" 
+          class="read-more-btn">阅读全文</router-link>
+        <span v-else class="read-more-btn disabled">暂无详情</span>
         <span v-if="blog.authorName" class="blog-author">作者: {{ blog.authorName }}</span>
       </div>
     </div>
@@ -19,24 +23,27 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import type { News } from '../../services/newsService';
+import type { Blog } from '../../services/blogService';
 
 export default defineComponent({
   name: 'BlogCard',
   props: {
     blog: {
-      type: Object as () => News,
+      type: Object as () => Blog | News,
       required: true
     }
   },
-  setup() {
+  setup(props) {
     // 格式化日期
     const formatDate = (dateStr: string) => {
+      if (!dateStr) return '';
       const date = new Date(dateStr);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
     
     // 获取内容摘要
     const getExcerpt = (content: string) => {
+      if (!content) return '';
       // 移除Markdown标记
       const plainText = content.replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
       return plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
@@ -122,6 +129,11 @@ export default defineComponent({
 
 .read-more-btn:hover {
   background-color: #1e3a8a;
+}
+
+.read-more-btn.disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
 }
 
 .blog-author {

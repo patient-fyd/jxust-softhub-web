@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { userService } from '../services/userService';
 import type { User } from '../services/userService';
 import type { RegisterRequest, LoginRequest } from '../services/userService';
@@ -8,6 +8,11 @@ export const useUserStore = defineStore('user', () => {
   const currentUser = ref<User | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
+
+  // 计算当前用户是否已登录
+  const isLoggedIn = computed(() => {
+    return !!currentUser.value && !!localStorage.getItem('token');
+  });
 
   // 从本地存储加载用户信息
   const loadUserFromStorage = () => {
@@ -111,6 +116,7 @@ export const useUserStore = defineStore('user', () => {
     currentUser,
     loading,
     error,
+    isLoggedIn,
     register,
     login,
     logout,

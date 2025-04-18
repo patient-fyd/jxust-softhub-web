@@ -19,7 +19,7 @@
     <div class="wrap">
       <div class="container">
         <router-link to="/" class="nav-item">首页</router-link>
-        <router-link to="/news" class="nav-item">新闻动态</router-link>
+        <router-link to="/blog" class="nav-item">技术博客</router-link>
         <router-link to="/moments" class="nav-item">日常动态</router-link>
         <router-link to="/practice" class="nav-item">在线刷题</router-link>
         <router-link to="/resources" class="nav-item">资源中心</router-link>

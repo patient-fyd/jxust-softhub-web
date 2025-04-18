@@ -23,7 +23,21 @@ export default defineConfig({
         target: 'http://localhost:9000', // 修改为本地后端API地址
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path
+        rewrite: (path) => path,
+        configure: (proxy, options) => {
+          // 在发送请求到后端之前打印调试信息
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('向后端发送请求:', req.method, req.url);
+          });
+          // 接收后端响应时打印调试信息
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('收到后端响应:', proxyRes.statusCode, req.url);
+          });
+          // 代理出错时打印调试信息
+          proxy.on('error', (err, req, res) => {
+            console.error('代理错误:', err);
+          });
+        }
       }
     }
   },

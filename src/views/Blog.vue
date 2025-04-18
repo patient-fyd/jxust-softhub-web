@@ -40,7 +40,7 @@
     </div>
     
     <div v-else class="blog-list">
-      <div v-for="blog in blogs" :key="blog.newsId" class="blog-card">
+      <div v-for="blog in blogs" :key="blog.blogId || blog.id" class="blog-card">
         <div class="blog-image" :style="blog.coverImage ? `background-image: url(${blog.coverImage})` : ''"></div>
         <div class="blog-content">
           <div class="blog-meta">
@@ -48,9 +48,12 @@
             <span class="blog-views">浏览: {{ blog.viewCount }}</span>
           </div>
           <h2 class="blog-title">{{ blog.title }}</h2>
-          <p class="blog-excerpt">{{ getExcerpt(blog.content) }}</p>
+          <div class="blog-description">
+            {{ blog.description || (blog.content && blog.content.replace(/<[^>]*>/g, '').substring(0, 200) + '...') || '暂无描述' }}
+          </div>
           <div class="blog-footer">
-            <router-link :to="`/news/${blog.newsId}`" class="read-more-btn">阅读全文</router-link>
+            <router-link v-if="blog.blogId" :to="`/blog/detail?blogId=${blog.blogId}`" class="read-more-btn">阅读全文</router-link>
+            <span v-else class="read-more-btn disabled">暂无详情</span>
             <span v-if="blog.authorName" class="blog-author">作者: {{ blog.authorName }}</span>
           </div>
         </div>
@@ -79,15 +82,16 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { newsService, type News } from '../services/newsService';
+import { useRoute, useRouter } from 'vue-router';
+import { blogService, type Blog } from '../services/blogService';
 
 export default defineComponent({
   name: 'BlogView',
   setup() {
     const route = useRoute();
+    const router = useRouter();
     
-    const blogs = ref<News[]>([]);
+    const blogs = ref<Blog[]>([]);
     const loading = ref(true);
     const error = ref('');
     const currentPage = ref(1);
@@ -105,15 +109,33 @@ export default defineComponent({
       error.value = '';
       
       try {
-        // 这里我们调用getBlogList方法，该方法会筛选category为"技术分享"的新闻
-        const response = await newsService.getBlogList({
+        const params: any = {
           page: currentPage.value,
-          pageSize: pageSize.value
-        });
+          size: pageSize.value,
+          status: 1 // 只获取已发布的博客
+        };
         
-        if (response.code === 0) {
+        // 添加搜索关键词
+        if (searchKeyword.value.trim()) {
+          params.keyword = searchKeyword.value.trim();
+        }
+        
+        // 调用博客接口
+        const response = await blogService.getBlogList(params);
+        console.log('API返回的原始数据：', JSON.stringify(response));
+        
+        if (response.code === 0 && response.data) {
           blogs.value = response.data.list;
           totalItems.value = response.data.total;
+          
+          // 添加调试输出
+          console.log('获取到的博客列表:', blogs.value);
+          if (blogs.value.length > 0) {
+            console.log('第一条博客数据的完整结构:', JSON.stringify(blogs.value[0]));
+            blogs.value.forEach(blog => {
+              console.log(`博客[${blog.title}] 的 blogId:`, blog.blogId, '数据id:', blog.id);
+            });
+          }
           
           // 根据排序选项进行排序
           if (sortBy.value === 'popular') {
@@ -145,15 +167,30 @@ export default defineComponent({
     
     // 格式化日期
     const formatDate = (dateStr: string) => {
+      if (!dateStr) return '';
       const date = new Date(dateStr);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     };
     
     // 获取内容摘要
     const getExcerpt = (content: string) => {
+      if (!content) return '';
       // 移除Markdown标记
       const plainText = content.replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
       return plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
+    };
+    
+    // 导航到博客详情页
+    const navigateToBlogDetail = (blogId: number | undefined) => {
+      console.log('导航到博客详情页:', blogId);
+      if (!blogId) {
+        console.error('无效的博客ID，无法跳转');
+        return;
+      }
+      router.push({
+        path: '/blog/detail',
+        query: { blogId: blogId.toString() }
+      });
     };
     
     onMounted(() => {
@@ -184,7 +221,8 @@ export default defineComponent({
       searchBlogs,
       changePage,
       formatDate,
-      getExcerpt
+      getExcerpt,
+      navigateToBlogDetail
     };
   }
 });
@@ -237,13 +275,13 @@ export default defineComponent({
 }
 
 .search-btn {
+  padding: 10px 15px;
   background-color: #1e40af;
   color: white;
   border: none;
-  padding: 0 20px;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-weight: 500;
 }
 
 .search-btn:hover {
@@ -256,7 +294,28 @@ export default defineComponent({
   border-radius: 4px;
   background-color: white;
   font-size: 1rem;
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: 50px 0;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.retry-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .blog-list {
@@ -267,14 +326,13 @@ export default defineComponent({
 }
 
 .blog-card {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-  background-color: white;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .blog-card:hover {
@@ -283,17 +341,18 @@ export default defineComponent({
 }
 
 .blog-image {
-  height: 200px;
+  height: 180px;
   background-color: #e5e7eb;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
 }
 
 .blog-content {
   padding: 20px;
-  flex: 1;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .blog-meta {
@@ -305,15 +364,14 @@ export default defineComponent({
 }
 
 .blog-title {
-  color: #1e40af;
   font-size: 1.3rem;
-  margin-bottom: 15px;
-  line-height: 1.4;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #1f2937;
 }
 
 .blog-excerpt {
   color: #4b5563;
-  line-height: 1.6;
   margin-bottom: 20px;
   flex: 1;
 }
@@ -326,17 +384,24 @@ export default defineComponent({
 }
 
 .read-more-btn {
-  background-color: #1e40af;
-  color: white;
+  display: inline-block;
   padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
   border-radius: 4px;
+  font-weight: 500;
   text-decoration: none;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s;
+  margin-top: 12px;
 }
 
 .read-more-btn:hover {
-  background-color: #1e3a8a;
+  background-color: #2563eb;
+}
+
+.read-more-btn.disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
 }
 
 .blog-author {
@@ -344,51 +409,32 @@ export default defineComponent({
   font-size: 0.9rem;
 }
 
-.loading-state,
-.error-state,
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  margin-bottom: 30px;
-}
-
-.retry-btn {
-  background-color: #1e40af;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  margin-top: 15px;
-  cursor: pointer;
-}
-
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 15px;
-  margin-top: 20px;
+  margin-top: 40px;
 }
 
 .page-btn {
+  padding: 8px 16px;
   background-color: #1e40af;
   color: white;
   border: none;
-  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-weight: 500;
 }
 
 .page-btn:disabled {
-  background-color: #9ca3af;
+  background-color: #d1d5db;
   cursor: not-allowed;
 }
 
 .page-info {
   color: #4b5563;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
@@ -398,7 +444,7 @@ export default defineComponent({
   }
   
   .search-box {
-    max-width: none;
+    max-width: 100%;
   }
   
   .blog-list {
