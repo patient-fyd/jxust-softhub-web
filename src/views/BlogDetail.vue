@@ -294,9 +294,10 @@ import { defineComponent, ref, computed, onMounted, watch, onBeforeUnmount, next
 import { useRoute, useRouter } from 'vue-router';
 import { blogService, type Blog, type BlogComment } from '../services/blogService';
 import { useUserStore } from '../stores/userStore';
-import Prism from 'prismjs/components/prism-core';           // 核心
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-javascript';
+
+// 修改为使用markdown-it和markdown-it-prism
+import MarkdownIt from 'markdown-it';
+import MarkdownItPrism from 'markdown-it-prism';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-css';
@@ -305,9 +306,9 @@ import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-python';
-import 'prismjs/plugins/line-numbers/prism-line-numbers';    // 行号插件
+import 'prismjs/plugins/line-numbers/prism-line-numbers';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
-import 'prismjs/plugins/toolbar/prism-toolbar';              // 工具栏（含复制按钮）
+import 'prismjs/plugins/toolbar/prism-toolbar';
 import 'prismjs/plugins/toolbar/prism-toolbar.css';
 import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 
@@ -365,6 +366,13 @@ export default defineComponent({
       };
     };
     
+    // 初始化markdown-it实例
+    const md = new MarkdownIt({
+      html: true,
+      breaks: true,
+      linkify: true
+    }).use(MarkdownItPrism);
+    
     // 加载博客详情
     const loadBlogDetail = async () => {
       if (blogId.value === null) {
@@ -389,11 +397,6 @@ export default defineComponent({
           // 获取相关内容
           loadComments();
           generateToc();
-          
-          // 确保博客内容渲染后再应用代码高亮
-          nextTick(() => {
-            applyHighlight();
-          });
         } else {
           error.value = response.msg || '未找到博客详情';
           console.error('博客详情API返回错误:', response);
@@ -964,63 +967,18 @@ export default defineComponent({
       handleWindowScroll();
     });
 
-    // 应用代码高亮的函数
-    const applyHighlight = () => {
-      console.log('Prism对象:', Prism);
-      
-      // 确保Prism对象存在且有highlightAll方法
-      if (Prism && typeof Prism.highlightAll === 'function') {
-        try {
-          // 调用Prism的高亮方法
-          Prism.highlightAll();
-          console.log('已应用代码高亮');
-        } catch (error) {
-          console.error('应用代码高亮失败:', error);
-        }
-      } else {
-        console.error('Prism.highlightAll方法不存在');
-      }
-    };
-
-    // 格式化内容，添加ID到标题
+    // 格式化内容，使用markdown-it解析
     const formatContent = (content: string) => {
       if (!content) return '';
       
-      // 处理标题并添加ID
-      let html = content
-        // 处理标题并添加ID
-        .replace(/^(#{1,6})\s+(.+?)$/gm, (match, hashes, title) => {
-          const level = hashes.length;
-          const text = title.trim();
-          const id = generateHeadingId(text);
-          return `<h${level} id="${id}" class="blog-heading">${text}</h${level}>`;
-        })
-        // 处理粗体
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // 处理斜体
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        // 处理链接
-        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-        // 处理图片 - 添加懒加载属性
-        .replace(/!\[(.+?)\]\((.+?)\)/g, '<img loading="lazy" src="$2" alt="$1" />')
-        // 处理代码块 - 支持语言标记，修改为Prism兼容的格式
-        .replace(/```(\w*)\s*([\s\S]+?)```/g, (match, lang, code) => {
-          const language = lang || 'plaintext';
-          return `<pre class="line-numbers language-${language}"><code class="language-${language}">${code.trim()}</code></pre>`;
-        })
-        // 处理行内代码
-        .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
-        // 处理分割线
-        .replace(/---/g, '<hr />')
-        // 处理段落
-        .replace(/(.+?)$/gm, (match) => {
-          if (match.startsWith('<h') || match.startsWith('<pre') || match.startsWith('<div class="code-block"') || match === '') {
-            return match;
-          }
-          return `<p>${match}</p>`;
-        });
+      // 使用markdown-it解析markdown内容
+      const html = md.render(content);
       
-      return html;
+      // 添加ID到标题以支持目录导航
+      return html.replace(/<h([1-6])>(.*?)<\/h\1>/g, (match, level, title) => {
+        const id = generateHeadingId(title);
+        return `<h${level} id="${id}" class="blog-heading">${title}</h${level}>`;
+      });
     };
 
     // 添加的状态和函数
