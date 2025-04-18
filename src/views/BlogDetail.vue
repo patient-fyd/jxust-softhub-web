@@ -295,22 +295,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { blogService, type Blog, type BlogComment } from '../services/blogService';
 import { useUserStore } from '../stores/userStore';
 
-// 修改为使用markdown-it和markdown-it-prism
+// 导入Markdown-it和插件
 import MarkdownIt from 'markdown-it';
 import MarkdownItPrism from 'markdown-it-prism';
+
+// 导入Prism样式
 import 'prismjs/themes/prism.css';
-import 'prismjs/components/prism-markup';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-python';
-import 'prismjs/plugins/line-numbers/prism-line-numbers';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
-import 'prismjs/plugins/toolbar/prism-toolbar';
 import 'prismjs/plugins/toolbar/prism-toolbar.css';
-import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 
 export default defineComponent({
   name: 'BlogDetail',
@@ -349,8 +341,67 @@ export default defineComponent({
     // 判断用户是否登录的计算属性
     const isUserLoggedIn = computed(() => userStore.isLoggedIn);
     
-    // 声明观察器变量
-    let headingObserver: IntersectionObserver | null = null;
+    // 初始化 Markdown-it 实例
+    const md = new MarkdownIt({
+      html: true,
+      breaks: true,
+      linkify: true
+    });
+    
+    // 使用markdown-it-prism插件
+    md.use(MarkdownItPrism);
+    
+    // 格式化内容
+    const formatContent = (content: string): string => {
+      if (!content) return '';
+      
+      // 处理标题添加ID以支持目录导航
+      let processedContent = content.replace(/^(#{1,6})\s+(.+?)$/gm, (match, hashes, title) => {
+        const level = hashes.length;
+        const text = title.trim();
+        const id = generateHeadingId(text);
+        return `<h${level} id="${id}" class="blog-heading">${text}</h${level}>`;
+      });
+      
+      // 添加行号标记到代码块
+      processedContent = processedContent.replace(/```(\w+)/g, '```$1 class=line-numbers');
+      
+      // 使用markdown-it渲染内容
+      let html = md.render(processedContent);
+      
+      // 后处理HTML，添加代码块容器和复制按钮
+      html = html.replace(/<pre class="language-(\w+).*?"><code.*?>/g, 
+        (match, lang) => {
+          return `<div class="code-block">
+            <div class="code-header">
+              <span>${lang}</span>
+              <button class="copy-btn" onclick="
+                const el = this.parentNode.parentNode.querySelector('code');
+                navigator.clipboard.writeText(el.textContent);
+                this.textContent = '已复制';
+                this.classList.add('copied');
+                setTimeout(() => {
+                  this.textContent = '复制';
+                  this.classList.remove('copied');
+                }, 1500);
+              ">复制</button>
+            </div>
+            ${match}`;
+        })
+        .replace(/<\/code><\/pre>/g, '</code></pre></div>');
+      
+      return html;
+    };
+    
+    // HTML转义函数
+    const escapeHtml = (text: string): string => {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
     
     // 防抖函数
     const debounce = (fn: Function, wait = 100) => {
@@ -365,13 +416,6 @@ export default defineComponent({
         }, wait);
       };
     };
-    
-    // 初始化markdown-it实例
-    const md = new MarkdownIt({
-      html: true,
-      breaks: true,
-      linkify: true
-    }).use(MarkdownItPrism);
     
     // 加载博客详情
     const loadBlogDetail = async () => {
@@ -967,20 +1011,6 @@ export default defineComponent({
       handleWindowScroll();
     });
 
-    // 格式化内容，使用markdown-it解析
-    const formatContent = (content: string) => {
-      if (!content) return '';
-      
-      // 使用markdown-it解析markdown内容
-      const html = md.render(content);
-      
-      // 添加ID到标题以支持目录导航
-      return html.replace(/<h([1-6])>(.*?)<\/h\1>/g, (match, level, title) => {
-        const id = generateHeadingId(title);
-        return `<h${level} id="${id}" class="blog-heading">${title}</h${level}>`;
-      });
-    };
-
     // 添加的状态和函数
     const sortMode = ref<'hot' | 'new'>('new'); // 默认最新排序
     const totalCommentsCount = ref(0);
@@ -1002,6 +1032,9 @@ export default defineComponent({
     const changeSortMode = (mode: 'hot' | 'new') => {
       sortMode.value = mode;
     };
+
+    // 声明观察器变量
+    let headingObserver: IntersectionObserver | null = null;
 
     return {
       blog,
@@ -1937,4 +1970,106 @@ export default defineComponent({
     font-family: inherit;
     font-size: inherit;
   }
+
+/* 代码块样式增强 */
+.code-block {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid #e5e7eb;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.copy-btn {
+  background: #e2e8f0;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #334155;
+}
+
+.copy-btn:hover {
+  background: #cbd5e1;
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+}
+
+.copy-btn.copied {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.code-block pre[class*="language-"] {
+  margin: 0;
+  border-radius: 0;
+}
+
+/* 行号样式增强 */
+.line-numbers .line-numbers-rows {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  font-size: 100%;
+  left: -3.8em;
+  width: 3em;
+  letter-spacing: -1px;
+  border-right: 1px solid #d1d5db;
+  user-select: none;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* 高亮的行 */
+.line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: rgba(59, 130, 246, 0.08);
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+
+/* 使pre标签始终有一个滚动条容器来支持行号和代码内容的精确对齐 */
+pre[class*="language-"].line-numbers {
+  position: relative;
+  padding-left: 3.8em;
+  counter-reset: linenumber;
+  white-space: pre;
+}
+
+/* 修复移动端样式 */
+@media (max-width: 768px) {
+  .code-block {
+    margin: 1rem 0;
+  }
+  
+  pre[class*="language-"].line-numbers {
+    padding-left: 3.5em;
+  }
+  
+  .line-numbers .line-numbers-rows {
+    left: -3.5em;
+    width: 2.5em;
+  }
+}
 </style>
