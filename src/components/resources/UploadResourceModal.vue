@@ -560,7 +560,8 @@ export default defineComponent({
 
 .modal-body {
   padding: 24px;
-  overflow-y: auto;
+  padding-right: 0;
+  overflow-y: hidden;
   max-height: calc(90vh - 140px);
   background-color: #fff;
   width: 100%;
@@ -579,9 +580,9 @@ export default defineComponent({
 .upload-form {
   max-height: 60vh;
   overflow-y: auto;
-  padding-right: 10px;
   width: 100%;
   box-sizing: border-box;
+  padding-right: 24px;
 }
 
 .form-group {
