@@ -58,7 +58,7 @@ onMounted(() => {
 
 <template>
   <NavBar v-if="!isFullscreenRoute" />
-  <router-view class="main-content" />
+  <router-view :class="['main-content', {'fullscreen-mode': isFullscreenRoute}]" />
   <Footer v-if="!isFullscreenRoute" />
 </template>
 
@@ -68,6 +68,8 @@ body {
   padding: 0;
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
   box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* 确保下拉菜单能够正确显示 */
@@ -99,5 +101,20 @@ body {
   min-height: v-bind('isFullscreenRoute ? "100vh" : "calc(100vh - 64px - 104px)"');
   display: flex;
   flex-direction: column;
+}
+
+/* 全屏模式下的特殊样式 */
+:deep(.main-content.fullscreen-mode) {
+  padding: 0;
+  margin: 0;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
 }
 </style>

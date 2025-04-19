@@ -1,4 +1,5 @@
 import apiClient from './api';
+import axios from 'axios';
 
 // 博客类型定义
 export interface Blog {
@@ -76,72 +77,127 @@ export interface BlogCommentListResponse {
 
 export const blogService = {
   // 获取博客列表
-  getBlogList: async (params: {
-    page?: number;
-    size?: number;
-    category?: string;
-    tag?: string;
-    keyword?: string;
-    authorId?: number;
-    status?: number;
-    isRecommend?: number;
-  }): Promise<BlogListResponse> => {
+  getBlogList: async (params: any): Promise<BlogListResponse> => {
     try {
-      const response = await apiClient.get<BlogListResponse>('/api/blog/v1/blog/list', { params });
-      
-      // 处理返回的数据，确保所有博客都有blogId字段
-      if (response.data && response.data.data && Array.isArray(response.data.data.list)) {
-        response.data.data.list.forEach(blog => {
-          if (!blog.blogId && blog.id) {
-            console.log(`处理博客数据:将id(${blog.id})赋值给blogId`);
-            blog.blogId = blog.id;
-          }
-        });
-      }
-      
+      const response = await axios.get('/api/blog/v1/blog/list', { params });
       return response.data;
     } catch (error) {
       console.error('获取博客列表失败:', error);
-      return {
-        code: -1,
-        msg: '获取博客列表失败',
-        traceid: '',
-        data: {
-          list: [],
-          total: 0,
-          page: params.page || 1,
-          size: params.size || 10
-        }
-      };
+      throw error;
     }
   },
 
-  // 获取博客详情 - 兼容id和blogId两种参数
-  getBlogDetail: async (id: number): Promise<BlogDetailResponse> => {
+  // 获取博客详情
+  getBlogById: async (blogId: string | number): Promise<BlogDetailResponse> => {
     try {
-      // 构建请求URL，兼容两种API格式
-      const url = `/api/blog/v1/blog/detail?blogId=${id}`;
-      console.log('发送博客详情请求:', url);
-      const response = await apiClient.get<BlogDetailResponse>(url);
-      console.log('博客详情API响应状态:', response.status);
-      
-      // 处理返回的数据，确保blogId字段存在
-      if (response.data && response.data.data) {
-        if (!response.data.data.blogId && response.data.data.id) {
-          console.log('API返回数据使用id而不是blogId，进行修正');
-          response.data.data.blogId = response.data.data.id;
-        }
-      }
-      
+      const response = await axios.get(`/api/blog/v1/blog/${blogId}`);
       return response.data;
     } catch (error) {
       console.error('获取博客详情失败:', error);
-      return {
-        code: -1,
-        msg: '获取博客详情失败',
-        traceid: '',
-        data: {} as Blog
-      };
+      throw error;
+    }
+  },
+
+  // 创建博客
+  createBlog: async (blogData: any): Promise<BlogDetailResponse> => {
+    try {
+      const response = await axios.post('/api/blog/v1/blog/create', blogData);
+      return response.data;
+    } catch (error) {
+      console.error('创建博客失败:', error);
+      throw error;
+    }
+  },
+
+  // 更新博客
+  updateBlog: async (blogId: string | number, blogData: any): Promise<BlogDetailResponse> => {
+    try {
+      const response = await axios.put(`/api/blog/v1/blog/update/${blogId}`, blogData);
+      return response.data;
+    } catch (error) {
+      console.error('更新博客失败:', error);
+      throw error;
+    }
+  },
+
+  // 删除博客
+  deleteBlog: async (blogId: string | number): Promise<BlogOperationResponse> => {
+    try {
+      const response = await axios.delete(`/api/blog/v1/blog/delete/${blogId}`);
+      return response.data;
+    } catch (error) {
+      console.error('删除博客失败:', error);
+      throw error;
+    }
+  },
+
+  // 上传图片
+  uploadImage: async (file: File): Promise<BlogOperationResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post('/api/blog/v1/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('上传图片失败:', error);
+      throw error;
+    }
+  },
+
+  // 批量上传图片
+  uploadImages: async (files: File[]): Promise<BlogOperationResponse> => {
+    try {
+      const formData = new FormData();
+      files.forEach((file, index) => {
+        formData.append(`files[${index}]`, file);
+      });
+      
+      const response = await axios.post('/api/blog/v1/upload/images', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('批量上传图片失败:', error);
+      throw error;
+    }
+  },
+
+  // 保存草稿
+  saveDraft: async (blogData: any): Promise<BlogDetailResponse> => {
+    try {
+      if (blogData.blogId) {
+        // 更新草稿
+        return await blogService.updateBlog(blogData.blogId, { ...blogData, status: 0 });
+      } else {
+        // 创建新草稿
+        return await blogService.createBlog({ ...blogData, status: 0 });
+      }
+    } catch (error) {
+      console.error('保存草稿失败:', error);
+      throw error;
+    }
+  },
+
+  // 发布博客
+  publishBlog: async (blogData: any): Promise<BlogDetailResponse> => {
+    try {
+      if (blogData.blogId) {
+        // 更新并发布
+        return await blogService.updateBlog(blogData.blogId, { ...blogData, status: 1 });
+      } else {
+        // 创建并发布
+        return await blogService.createBlog({ ...blogData, status: 1 });
+      }
+    } catch (error) {
+      console.error('发布博客失败:', error);
+      throw error;
     }
   },
 

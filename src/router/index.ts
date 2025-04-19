@@ -44,15 +44,9 @@ const routes: Array<RouteRecordRaw> = [
     path: '/blog/editor',
     name: 'BlogEditor',
     component: () => import('../views/blog/editor.vue'),
-    meta: { requiresAuth: true } // 需要登录才能访问
-  },
-  {
-    path: '/blog/fullscreen-editor',
-    name: 'FullscreenBlogEditor',
-    component: () => import('../views/blog/FullscreenEditor.vue'), 
     meta: { 
       requiresAuth: true,
-      fullscreen: true  // 标记为全屏页面，不显示导航栏和页脚
+      fullscreen: true // 标记为全屏页面，不显示导航栏和页脚
     }
   },
   {

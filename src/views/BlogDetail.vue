@@ -461,12 +461,12 @@ export default defineComponent({
       console.log('开始加载博客详情，blogId:', blogId.value);
       
       try {
-        const response = await blogService.getBlogDetail(Number(blogId.value));
+        const response = await blogService.getBlogById(Number(blogId.value));
         console.log('博客详情API响应:', response);
         
         if (response.code === 0 && response.data) {
           blog.value = response.data;
-          document.title = `${blog.value.title || '博客详情'} - 软件技术博客`;
+          document.title = `${blog.value?.title || '博客详情'} - 软件技术博客`;
           // 获取相关内容
           loadComments();
           generateToc();

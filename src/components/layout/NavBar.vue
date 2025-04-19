@@ -62,7 +62,7 @@
               </div>
               
               <!-- 管理员和高权限用户可以分享资源和发布公告 -->
-              <div class="navbar-dropdown-item" v-if="canShareResource" @click="navigateTo('/resources/upload')">
+              <div class="navbar-dropdown-item" v-if="canShareResource" @click="navigateTo('/resources')">
                 <Icon icon="mdi:folder-outline" width="18" height="18" />
                 <span>分享资源</span>
               </div>

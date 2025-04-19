@@ -1,122 +1,107 @@
 <template>
-  <div class="blog-editor-container">
-    <div class="editor-top-bar">
-      <input
-        type="text"
-        class="title-input"
-        placeholder="输入文章标题..."
-        v-model="blogData.title"
-      />
-      <div class="actions">
-        <button class="secondary-btn" @click="saveDraft">草稿箱</button>
-        <button class="primary-btn" @click="openPublishModal">发布</button>
-      </div>
-    </div>
-
-    <div class="editor-wrapper">
-      <Editor
-        :value="blogData.content"
-        :plugins="plugins"
-        :locale="locale"
-        :uploadImages="uploadImages"
-        mode="split"
-        @change="handleEditorChange"
-      />
-    </div>
-
-    <!-- 编辑器状态栏 -->
-    <div class="editor-status-bar">
-      <div class="status-left">
-        <span>字符数: {{ charCount }} 行数: {{ lineCount }} 正文字数: {{ contentCount }}</span>
-      </div>
-      <div class="status-right">
-        <button @click="toggleSyncScroll">{{ syncScroll ? '同步滚动' : '取消同步' }}</button>
-        <button @click="scrollToTop">回到顶头</button>
-      </div>
-    </div>
-
-    <!-- 自动保存提示 -->
-    <div class="autosave-indicator" v-if="showSaveIndicator">
-      保存成功
-    </div>
-
-    <!-- 发布确认模态框 -->
-    <div class="modal-overlay" v-if="showPublishModal" @click="showPublishModal = false">
-      <div class="modal-content publish-modal" @click.stop>
-        <h2>发布文章</h2>
-        
-        <div class="form-group">
-          <label for="category">文章分类</label>
-          <select id="category" v-model="blogData.category" class="form-control">
-            <option value="">请选择分类（必填）</option>
-            <option v-for="category in categories" :key="category" :value="category">
-              {{ category }}
-            </option>
-          </select>
+  <div class="editor-root">
+    <div class="editor-container">
+      <div class="editor-header">
+        <input
+          type="text"
+          class="title-input"
+          placeholder="输入文章标题..."
+          v-model="blogData.title"
+          @input="handleTitleChange"
+        />
+        <div class="actions">
+          <button class="secondary-btn" @click="saveDraft">草稿箱</button>
+          <button class="primary-btn" @click="openPublishModal">发布</button>
         </div>
-        
-        <div class="form-group">
-          <label for="tags">文章标签</label>
-          <input 
-            type="text" 
-            id="tags" 
-            v-model="blogData.tags" 
-            placeholder="多个标签用逗号分隔，如：Vue,JavaScript,前端" 
-            class="form-control"
-          />
-        </div>
+      </div>
 
-        <div class="form-group">
-          <label for="summary">文章摘要</label>
-          <textarea 
-            id="summary" 
-            v-model="blogData.summary" 
-            placeholder="请输入文章摘要（可选，不填则自动截取内容前部分）" 
-            class="form-control"
-            rows="3"
-          ></textarea>
-        </div>
+      <div class="editor-main">
+        <MarkdownEditor
+          v-model="blogData.content"
+          @change="handleEditorChange"
+          @save="handleAutoSave"
+          :autoSave="true"
+        />
+      </div>
 
-        <div class="form-group">
-          <label for="coverImage">封面图片</label>
-          <div class="cover-upload">
-            <div 
-              class="cover-preview" 
-              :style="blogData.coverImage ? `background-image: url(${blogData.coverImage})` : ''"
-              @click="triggerFileInput"
-            >
-              <div v-if="!blogData.coverImage" class="upload-placeholder">
-                <i class="upload-icon">📷</i>
-                <span>点击上传封面图片</span>
-              </div>
-              <button v-else class="remove-cover" @click.stop="removeCoverImage">×</button>
-            </div>
+      <!-- 发布确认模态框 -->
+      <div class="modal-overlay" v-if="showPublishModal" @click="showPublishModal = false">
+        <div class="modal-content publish-modal" @click.stop>
+          <h2>发布文章</h2>
+          
+          <div class="form-group">
+            <label for="category">文章分类</label>
+            <select id="category" v-model="blogData.category" class="form-control">
+              <option value="">请选择分类（必填）</option>
+              <option v-for="category in categories" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="tags">文章标签</label>
             <input 
-              type="file" 
-              ref="fileInput" 
-              style="display: none" 
-              accept="image/*" 
-              @change="handleCoverUpload"
+              type="text" 
+              id="tags" 
+              v-model="blogData.tags" 
+              placeholder="多个标签用逗号分隔，如：Vue,JavaScript,前端" 
+              class="form-control"
             />
           </div>
-        </div>
-        
-        <div v-if="publishWarnings.length > 0" class="warning">
-          <strong>注意：</strong>
-          <ul>
-            <li v-for="(warning, index) in publishWarnings" :key="index">{{ warning }}</li>
-          </ul>
-        </div>
-        
-        <div class="modal-actions">
-          <button class="secondary-btn" @click="showPublishModal = false">取消</button>
-          <button 
-            class="primary-btn" 
-            @click="publishBlog" 
-            :disabled="isPublishing || publishWarnings.length > 0"
-          >
-            {{ isPublishing ? '发布中...' : '确认发布' }}
-          </button>
+
+          <div class="form-group">
+            <label for="summary">文章摘要</label>
+            <textarea 
+              id="summary" 
+              v-model="blogData.summary" 
+              placeholder="请输入文章摘要（可选，不填则自动截取内容前部分）" 
+              class="form-control"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="coverImage">封面图片</label>
+            <div class="cover-upload">
+              <div 
+                class="cover-preview" 
+                :style="blogData.coverImage ? `background-image: url(${blogData.coverImage})` : ''"
+                @click="triggerFileInput"
+              >
+                <div v-if="!blogData.coverImage" class="upload-placeholder">
+                  <i class="upload-icon">📷</i>
+                  <span>点击上传封面图片</span>
+                </div>
+                <button v-else class="remove-cover" @click.stop="removeCoverImage">×</button>
+              </div>
+              <input 
+                type="file" 
+                ref="fileInput" 
+                style="display: none" 
+                accept="image/*" 
+                @change="handleCoverUpload"
+              />
+            </div>
+          </div>
+          
+          <div v-if="publishWarnings.length > 0" class="warning">
+            <strong>注意：</strong>
+            <ul>
+              <li v-for="(warning, index) in publishWarnings" :key="index">{{ warning }}</li>
+            </ul>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="secondary-btn" @click="showPublishModal = false">取消</button>
+            <button 
+              class="primary-btn" 
+              @click="publishBlog" 
+              :disabled="isPublishing || publishWarnings.length > 0"
+            >
+              {{ isPublishing ? '发布中...' : '确认发布' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -126,78 +111,17 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
-// 导入ByteMD编辑器
-import { Editor } from '@bytemd/vue-next';
-import 'bytemd/dist/index.css';
-
-// 导入ByteMD插件
-import gfm from '@bytemd/plugin-gfm';
-import highlight from '@bytemd/plugin-highlight';
-import math from '@bytemd/plugin-math';
-import mermaid from '@bytemd/plugin-mermaid';
-// 导入额外插件
-import breaks from '@bytemd/plugin-breaks';
-import gemoji from '@bytemd/plugin-gemoji';
-import mediumZoom from '@bytemd/plugin-medium-zoom';
-
-// 导入样式
-import 'highlight.js/styles/github.css';
-import 'katex/dist/katex.css';
-
-// 引入博客服务
+import MarkdownEditor from '@/components/editor/MarkdownEditor.vue';
 import { blogService } from '../../services/blogService';
 
 export default {
   components: {
-    Editor
+    MarkdownEditor
   },
   setup() {
-    // 配置ByteMD插件
-    const plugins = [
-      gfm(),
-      highlight(),
-      math(),
-      mermaid(),
-      breaks(),
-      gemoji(),
-      mediumZoom()
-    ];
-
-    // 中文本地化配置
-    const locale = {
-      fullscreen: '全屏',
-      preview: '预览',
-      write: '编辑',
-      uploadImage: '上传图片',
-      imgTitle: '图片',
-      bold: '粗体',
-      italic: '斜体',
-      header: '标题',
-      quote: '引用',
-      code: '代码',
-      link: '链接',
-      orderedList: '有序列表',
-      unorderedList: '无序列表',
-      table: '表格'
-    };
-
-    // 编辑器模式固定为分栏模式
-    const mode = "split";
-
-    // 图片上传功能
-    const uploadImages = async (files) => {
-      // 模拟图片上传，实际项目中应该上传到服务器
-      return files.map(file => ({
-        url: URL.createObjectURL(file),
-        alt: file.name
-      }));
-    };
-
     const route = useRoute();
     const router = useRouter();
     const fileInput = ref(null);
-    const showSaveIndicator = ref(false);
     let autoSaveTimer = null;
 
     // 编辑模式标识
@@ -260,14 +184,23 @@ export default {
       if (editorEl) editorEl.scrollTop = 0;
     };
 
-    // 编辑器内容变化处理
-    const handleEditorChange = (v) => {
-      blogData.value.content = v;
-      // 设置自动保存
+    // 标题变化处理
+    const handleTitleChange = () => {
+      // 延时自动保存
       if (autoSaveTimer) clearTimeout(autoSaveTimer);
       autoSaveTimer = setTimeout(() => {
         autoSave();
       }, 3000);
+    };
+
+    // 编辑器内容变化处理
+    const handleEditorChange = () => {
+      // 内容变化不自动保存，使用MarkdownEditor组件内的autosave功能
+    };
+
+    // 接收MarkdownEditor组件触发的自动保存事件
+    const handleAutoSave = () => {
+      autoSave();
     };
 
     // 自动保存
@@ -300,11 +233,6 @@ export default {
             });
           }
         }
-        // 显示保存成功提示
-        showSaveIndicator.value = true;
-        setTimeout(() => {
-          showSaveIndicator.value = false;
-        }, 2000);
       } catch (error) {
         console.error('自动保存失败:', error);
       }
@@ -328,6 +256,10 @@ export default {
       
       return warnings;
     });
+
+    // 发布相关状态
+    const showPublishModal = ref(false);
+    const isPublishing = ref(false);
 
     // 加载博客详情（编辑模式）
     const loadBlogDetail = async () => {
@@ -506,10 +438,6 @@ export default {
       }
     };
 
-    // 发布相关状态
-    const showPublishModal = ref(false);
-    const isPublishing = ref(false);
-
     onMounted(() => {
       // 编辑模式下加载博客详情
       if (isEdit.value) {
@@ -518,10 +446,6 @@ export default {
     });
 
     return {
-      plugins,
-      locale,
-      mode,
-      uploadImages,
       blogData,
       categories,
       fileInput,
@@ -529,8 +453,9 @@ export default {
       showPublishModal,
       isPublishing,
       publishWarnings,
-      showSaveIndicator,
+      handleTitleChange,
       handleEditorChange,
+      handleAutoSave,
       triggerFileInput,
       handleCoverUpload,
       removeCoverImage,
@@ -548,25 +473,34 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 1. 整体容器：布满整个页面 */
-.blog-editor-container {
-  max-width: 100%;
+<style>
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+.editor-root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   background-color: #ffffff;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
+}
+
+.editor-container {
   display: flex;
   flex-direction: column;
-  position: relative;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
-/* 2. 顶部工具栏：简约分割 */
-.editor-top-bar {
+.editor-header {
   display: flex;
   align-items: center;
   height: 56px;
@@ -574,9 +508,17 @@ export default {
   background-color: #ffffff;
   border-bottom: 1px solid #ebeef5;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  width: 100%;
 }
 
-/* 3. 标题输入框：扁平化与留白 */
+.editor-main {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
 .title-input {
   flex: 1;
   height: 36px;
@@ -596,7 +538,6 @@ export default {
   background-color: #ffffff;
 }
 
-/* 4. 操作按钮：主次分明 */
 .primary-btn {
   background-color: #409eff;
   color: #ffffff;
@@ -637,275 +578,86 @@ export default {
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* 5. 编辑器主体：占满剩余空间 */
-.editor-wrapper {
-  flex: 1;
+.actions {
   display: flex;
-  background-color: #ffffff;
-  overflow: hidden;
-  height: calc(100vh - 56px);
-  border: none;
+  gap: 12px;
 }
 
-/* 编辑器基本样式 */
 :deep(.bytemd) {
-  height: 100% !important;
-  border: none !important;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  overflow: hidden;
 }
 
-/* 工具栏样式优化 */
 :deep(.bytemd-toolbar) {
-  border-bottom: 1px solid #ebeef5;
-  background-color: #f5f7fa;
-  padding: 10px 16px;
+  flex-shrink: 0;
+  width: 100% !important;
   display: flex;
-  flex-wrap: nowrap;
   justify-content: space-between;
-  width: 100%;
-  z-index: 10;
-  overflow-x: auto;
-  white-space: nowrap;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  position: sticky;
-  top: 0;
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+  padding: 8px 16px;
+  box-sizing: border-box;
 }
 
 :deep(.bytemd-toolbar-left) {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
   align-items: center;
-  width: 100%;
 }
 
 :deep(.bytemd-toolbar-right) {
   display: flex;
-  gap: 8px;
-  margin-left: 20px;
+  gap: 4px;
   align-items: center;
-  flex-shrink: 0;
 }
 
 :deep(.bytemd-toolbar-icon) {
-  color: #606266;
-  height: 42px;
-  width: 42px;
-  margin: 0;
-  border-radius: 4px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  color: #606266;
+  border-radius: 4px;
   background-color: transparent;
-  flex-shrink: 0;
+  transition: all 0.2s;
 }
 
-:deep(.bytemd-toolbar-icon:hover) {
-  background-color: #e4e7ed;
-  color: #409eff;
-}
-
+:deep(.bytemd-toolbar-icon:hover),
 :deep(.bytemd-toolbar-icon.bytemd-tippy-active) {
-  background-color: #ecf5ff;
+  background-color: rgba(64, 158, 255, 0.1);
   color: #409eff;
 }
 
-:deep(.bytemd-toolbar-icon svg) {
-  width: 20px;
-  height: 20px;
-}
-
-/* 编辑区域和预览区域样式 */
 :deep(.bytemd-body) {
   flex: 1;
   display: flex;
   overflow: hidden;
-  border: none;
-  height: calc(100vh - 140px); /* 110px + 30px(状态栏) */
+  width: 100%;
 }
 
-/* 确保编辑和预览区域的固定宽度 */
-:deep(.bytemd-editor) {
-  width: 50% !important;
-  max-width: 50% !important;
-  flex: 0 0 50% !important;
-  border-right: 1px solid #ebeef5;
-  overflow: auto;
+:deep(.bytemd-split) {
   display: flex;
-  flex-direction: column;
+  width: 100%;
+  height: 100%;
   background-color: #ffffff;
 }
 
+:deep(.bytemd-editor),
 :deep(.bytemd-preview) {
   width: 50% !important;
-  max-width: 50% !important;
-  flex: 0 0 50% !important;
-  background-color: #ffffff;
-  padding: 0;
+  flex: 0 0 50%;
   overflow: auto;
 }
 
-:deep(.bytemd-fullscreen) {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10000;
-}
-
-:deep(.bytemd-fullscreen .bytemd-body) {
-  height: calc(100vh - 54px);
-}
-
-/* 代码编辑区域样式 */
-:deep(.CodeMirror) {
-  height: 100% !important;
-  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #303133;
-  padding: 0;
-  background-color: #ffffff;
-}
-
-:deep(.CodeMirror-scroll) {
-  min-height: 100%;
-}
-
-:deep(.CodeMirror-lines) {
-  padding: 16px;
-}
-
-:deep(.CodeMirror-line) {
-  padding: 0;
-}
-
-:deep(.CodeMirror-gutters) {
-  border-right: 1px solid #ebeef5;
-  background-color: #f5f7fa;
-}
-
-/* Markdown 预览样式 */
-:deep(.bytemd-preview .markdown-body) {
-  padding: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  color: #303133;
-  line-height: 1.6;
-}
-
-:deep(.bytemd-preview .markdown-body pre) {
-  background-color: #f5f7fa;
-  border-radius: 2px;
-  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
-}
-
-:deep(.markdown-body code:not([class*="language-"])) {
-  background-color: #f5f7fa;
-  border-radius: 2px;
-  padding: 0.2em 0.4em;
-  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
-}
-
-:deep(.hljs) {
-  padding: 16px;
-  border-radius: 2px;
-}
-
-/* GitHub风格的Markdown预览样式 */
-:deep(.markdown-body) {
-  color: #303133;
-  line-height: 1.6;
-  font-size: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-:deep(.markdown-body h1) {
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid #ebeef5;
-  font-size: 2em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: #303133;
-}
-
-:deep(.markdown-body h2) {
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid #ebeef5;
-  font-size: 1.5em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: #303133;
-}
-
-:deep(.markdown-body h3) {
-  font-size: 1.25em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: #303133;
-}
-
-:deep(.markdown-body h4) {
-  font-size: 1em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: #303133;
-}
-
-:deep(.markdown-body p) {
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
-:deep(.markdown-body a) {
-  color: #409eff;
-  text-decoration: none;
-}
-
-:deep(.markdown-body a:hover) {
-  text-decoration: underline;
-}
-
-:deep(.markdown-body table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 16px 0;
-  display: block;
-  overflow-x: auto;
-}
-
-:deep(.markdown-body table th, .markdown-body table td) {
-  padding: 6px 13px;
-  border: 1px solid #ebeef5;
-}
-
-:deep(.markdown-body table th) {
-  background-color: #f5f7fa;
-  font-weight: 600;
-  color: #303133;
-}
-
-:deep(.markdown-body table tr:nth-child(2n)) {
-  background-color: #fafafa;
-}
-
-:deep(.markdown-body img) {
-  max-width: 100%;
-  box-sizing: content-box;
-  background-color: #fff;
-  border-radius: 2px;
-}
-
-:deep(.markdown-body blockquote) {
-  padding: 0 1em;
-  color: #606266;
-  border-left: 0.25em solid #dcdfe6;
-  margin: 0 0 16px 0;
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* 自动保存提示 */
@@ -985,11 +737,6 @@ export default {
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
 }
 
 /* 表单控件样式 */
@@ -1099,7 +846,7 @@ textarea.form-control {
 
 /* 响应式调整 */
 @media (max-width: 900px) {
-  .editor-top-bar {
+  .editor-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
@@ -1125,66 +872,15 @@ textarea.form-control {
     height: 160px;
   }
   
-  :deep(.bytemd-body) {
-    height: calc(100vh - 130px);
+  :deep(.bytemd-split) {
+    flex-direction: column;
   }
   
   :deep(.bytemd-editor),
   :deep(.bytemd-preview) {
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  :deep(.bytemd-split) {
-    flex-direction: column;
+    width: 100% !important;
+    flex: 0 0 100%;
+    height: 50%;
   }
 }
-
-/* 全屏工具栏的样式优化 */
-:deep(.bytemd-fullscreen .bytemd-toolbar) {
-  padding: 8px 16px;
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
-}
-
-:deep(.bytemd-split) {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-  /* 编辑器状态栏样式 */
-  .editor-status-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 30px;
-    background-color: #f5f7fa;
-    border-top: 1px solid #ebeef5;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 12px;
-    font-size: 12px;
-    color: #606266;
-    z-index: 10;
-  }
-  .editor-status-bar .status-left,
-  .editor-status-bar .status-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .editor-status-bar button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #409eff;
-    padding: 0;
-    font-size: 12px;
-  }
-  .editor-status-bar button:hover {
-    text-decoration: underline;
-  }
 </style>
