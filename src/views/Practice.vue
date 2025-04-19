@@ -77,7 +77,11 @@
           :searchKeyword="searchKeyword"
           :selectedDifficulty="selectedDifficulty"
           :selectedTags="selectedTags"
+          :pageSize="pagination.pageSize"
+          :currentPage="pagination.currentPage"
           @reset-filters="resetFilters"
+          @update:currentPage="pagination.currentPage = $event"
+          @update:pageSize="pagination.pageSize = $event"
         />
       </div>
       
@@ -134,6 +138,12 @@ export default defineComponent({
     const searchKeyword = ref('');
     const selectedDifficulty = ref('');
     const selectedTags = ref<string[]>([]);
+    
+    // 分页相关
+    const pagination = ref({
+      currentPage: 1,
+      pageSize: 10
+    });
     
     // 可用的标签列表
     const availableTags = ref([
@@ -479,6 +489,8 @@ export default defineComponent({
       } else {
         selectedTags.value.push(tag);
       }
+      // 重置当前页码
+      pagination.value.currentPage = 1;
     };
     
     // 重置所有筛选条件
@@ -486,6 +498,8 @@ export default defineComponent({
       searchKeyword.value = '';
       selectedDifficulty.value = '';
       selectedTags.value = [];
+      // 重置当前页码
+      pagination.value.currentPage = 1;
     };
     
     // 最近解决的问题
@@ -522,6 +536,9 @@ export default defineComponent({
     
     // 处理搜索
     const handleSearch = () => {
+      // 重置当前页码
+      pagination.value.currentPage = 1;
+      
       // 如果搜索框为空且没有其他筛选条件，则刷新题目列表
       if (searchKeyword.value.trim() === '' && 
           selectedDifficulty.value === '' && 
@@ -542,7 +559,8 @@ export default defineComponent({
       toggleTag,
       resetFilters,
       fetchProblems,
-      handleSearch
+      handleSearch,
+      pagination
     };
   }
 });

@@ -75,26 +75,15 @@
       </div>
     </div>
     
-    <div v-if="filteredProblems.length > 0" class="pagination">
-      <button 
-        @click="prevPage" 
-        class="page-btn" 
-        :disabled="currentPage === 1"
-      >
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      
-      <div class="page-info">
-        {{ currentPage }} / {{ totalPages }}
-      </div>
-      
-      <button 
-        @click="nextPage" 
-        class="page-btn" 
-        :disabled="currentPage === totalPages"
-      >
-        <i class="fas fa-chevron-right"></i>
-      </button>
+    <div v-if="filteredProblems.length > 0" class="pagination-wrapper">
+      <Pagination
+        :total="filteredProblems.length"
+        :pageSize="pageSize"
+        :currentPage="currentPage"
+        :pageSizes="[10, 20, 30, 50]"
+        @update:currentPage="$emit('update:currentPage', $event)"
+        @update:pageSize="$emit('update:pageSize', $event)"
+      />
     </div>
   </div>
 </template>
@@ -104,9 +93,13 @@ import { defineComponent, computed, ref, watch } from 'vue';
 import type { PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Problem } from '../../services/ProblemService';
+import Pagination from '../common/Pagination.vue';
 
 export default defineComponent({
   name: 'ProblemList',
+  components: {
+    Pagination
+  },
   props: {
     problems: {
       type: Array as PropType<Problem[]>,
@@ -127,13 +120,19 @@ export default defineComponent({
     selectedTags: {
       type: Array as PropType<string[]>,
       default: () => []
+    },
+    currentPage: {
+      type: Number,
+      default: 1
+    },
+    pageSize: {
+      type: Number,
+      default: 10
     }
   },
-  emits: ['reset-filters'],
+  emits: ['reset-filters', 'update:currentPage', 'update:pageSize'],
   setup(props, { emit }) {
     const router = useRouter();
-    const currentPage = ref(1);
-    const pageSize = ref(10);
     
     // 根据筛选条件过滤题目
     const filteredProblems = computed(() => {
@@ -165,30 +164,12 @@ export default defineComponent({
       return result;
     });
     
-    // 计算总页数
-    const totalPages = computed(() => {
-      return Math.ceil(filteredProblems.value.length / pageSize.value);
-    });
-    
     // 当前页显示的题目
     const displayedProblems = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value;
-      const end = start + pageSize.value;
+      const start = (props.currentPage - 1) * props.pageSize;
+      const end = start + props.pageSize;
       return filteredProblems.value.slice(start, end);
     });
-    
-    // 翻页方法
-    function nextPage() {
-      if (currentPage.value < totalPages.value) {
-        currentPage.value++;
-      }
-    }
-    
-    function prevPage() {
-      if (currentPage.value > 1) {
-        currentPage.value--;
-      }
-    }
     
     // 重置筛选条件
     function resetFilters() {
@@ -232,25 +213,9 @@ export default defineComponent({
       }
     }
     
-    // 强制确保页码始终有效
-    watch(
-      [() => totalPages.value, () => filteredProblems.value],
-      () => {
-        if (currentPage.value > totalPages.value && totalPages.value > 0) {
-          currentPage.value = totalPages.value;
-        } else if (totalPages.value === 0) {
-          currentPage.value = 1;
-        }
-      }
-    );
-    
     return {
-      currentPage,
-      totalPages,
       filteredProblems,
       displayedProblems,
-      nextPage,
-      prevPage,
       resetFilters,
       navigateToProblem,
       getStatusText,
@@ -325,31 +290,31 @@ export default defineComponent({
 }
 
 .problem-header-status {
-  width: 50px;
+  width: 40px;
   text-align: center;
 }
 
 .problem-header-id {
-  width: 80px;
+  width: 60px;
   font-weight: 500;
   text-align: center;
 }
 
 .problem-header-title {
-  flex: 2;
+  flex: 3;
   font-weight: 500;
   text-align: left;
   padding-left: 10px;
 }
 
 .problem-header-difficulty {
-  width: 100px;
+  width: 70px;
   font-weight: 500;
   text-align: center;
 }
 
 .problem-header-tags {
-  width: 180px;
+  width: 120px;
   font-weight: 500;
   text-align: center;
 }
@@ -360,6 +325,9 @@ export default defineComponent({
   overflow: hidden;
   margin: 0 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  max-width: 1000px;
+  align-self: center;
+  width: 100%;
 }
 
 .problem-list-body {
@@ -371,7 +339,7 @@ export default defineComponent({
 .problem-item {
   display: flex;
   align-items: center;
-  padding: 14px 15px;
+  padding: 12px;
   border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
@@ -400,7 +368,7 @@ export default defineComponent({
 }
 
 .problem-status {
-  width: 50px;
+  width: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -428,12 +396,12 @@ export default defineComponent({
 }
 
 .problem-id {
-  width: 80px;
+  width: 60px;
   text-align: center;
 }
 
 .problem-title {
-  flex: 2;
+  flex: 3;
   text-align: left;
   padding-left: 10px;
   font-weight: 500;
@@ -444,7 +412,7 @@ export default defineComponent({
 }
 
 .problem-difficulty {
-  width: 100px;
+  width: 70px;
   text-align: center;
 }
 
@@ -471,7 +439,7 @@ export default defineComponent({
 }
 
 .problem-tags {
-  width: 180px;
+  width: 120px;
   display: flex;
   justify-content: center;
   gap: 4px;
@@ -487,7 +455,7 @@ export default defineComponent({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80px;
+  max-width: 60px;
 }
 
 .more-tags {
@@ -495,49 +463,18 @@ export default defineComponent({
   color: #888;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
-  margin: 15px 20px 0;
+.pagination-wrapper {
+  margin: 15px auto 0;
   background-color: white;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
+  padding: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.page-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background: white;
-  cursor: pointer;
+  max-width: 1000px;
+  width: calc(100% - 40px);
   display: flex;
-  align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-btn:not(:disabled):hover {
-  background-color: #f0f5ff;
-  border-color: #4785ff;
-  color: #4785ff;
-}
-
-.page-info {
-  margin: 0 15px;
-  font-size: 15px;
-  color: #555;
-  min-width: 80px;
-  text-align: center;
-  font-weight: 500;
+  align-items: center;
 }
 
 /* 增加题目条目之间的视觉区分 */
@@ -563,5 +500,27 @@ export default defineComponent({
 
 .problem-item.attempted:nth-child(odd) {
   background-color: rgba(255, 193, 7, 0.07);
+}
+
+@media (max-width: 768px) {
+  .problem-header-tags, .problem-tags {
+    display: none;
+  }
+  
+  .problem-header-difficulty, .problem-difficulty {
+    width: 60px;
+  }
+  
+  .problem-header-status, .problem-status {
+    width: 30px;
+  }
+  
+  .problem-header-id, .problem-id {
+    width: 50px;
+  }
+  
+  .problem-item, .problem-list-header {
+    padding: 10px 8px;
+  }
 }
 </style> 

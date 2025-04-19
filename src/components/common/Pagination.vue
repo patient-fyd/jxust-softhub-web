@@ -172,7 +172,7 @@ export default defineComponent({
 .pagination-container {
   display: flex;
   justify-content: center;
-  margin-top: 32px;
+  width: 100%;
 }
 
 .pagination {
