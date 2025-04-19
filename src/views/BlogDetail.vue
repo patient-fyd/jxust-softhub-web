@@ -20,7 +20,7 @@
     <template v-else-if="blog">
       <div class="back-nav">
         <router-link to="/blog" class="back-link">
-          <i class="fas fa-arrow-left"></i> 返回博客列表
+          <Icon icon="material-symbols:arrow-back" /> 返回博客列表
         </router-link>
       </div>
       
@@ -32,23 +32,23 @@
             <h1>{{ blog.title }}</h1>
             <div class="blog-meta">
               <div class="meta-item">
-                <i class="fas fa-calendar"></i>
+                <Icon icon="material-symbols:calendar-month" />
                 <span>{{ formatDate(blog.createTime) }}</span>
               </div>
               <div class="meta-item">
-                <i class="fas fa-eye"></i>
+                <Icon icon="material-symbols:visibility" />
                 <span>浏览: {{ blog.viewCount }}</span>
               </div>
               <div class="meta-item">
-                <i class="fas fa-thumbs-up"></i>
+                <Icon icon="material-symbols:thumb-up" />
                 <span>点赞: {{ blog.likeCount }}</span>
               </div>
               <div class="meta-item">
-                <i class="fas fa-comment"></i>
+                <Icon icon="material-symbols:comment" />
                 <span>评论: {{ blog.commentCount || 0 }}</span>
               </div>
               <div v-if="blog.authorName" class="meta-item author-item">
-                <i class="fas fa-user"></i>
+                <Icon icon="material-symbols:person" />
                 <span>{{ blog.authorName }}</span>
               </div>
             </div>
@@ -71,23 +71,47 @@
             
             <div class="action-buttons">
               <button 
-                class="like-button" 
-                :class="{ liked: isLiked }"
+                class="action-btn like-btn" 
+                :class="{ active: isLiked }"
                 @click="toggleLike"
+                title="点赞"
               >
-                <i class="fas" :class="isLiked ? 'fa-thumbs-up' : 'fa-thumbs-o-up'"></i>
-                点赞 ({{ blog.likeCount }})
+                <Icon :icon="isLiked ? 'material-symbols:thumb-up' : 'material-symbols:thumb-up-outline'" />
+                <span>{{ blog.likeCount || 0 }}</span>
               </button>
               
-              <div class="share-buttons">
-                <button class="share-btn" title="分享到微信">
-                  <i class="fab fa-weixin"></i>
+              <button 
+                class="action-btn collect-btn" 
+                :class="{ active: isFavorite }"
+                @click="toggleFavorite"
+                title="收藏"
+              >
+                <Icon :icon="isFavorite ? 'material-symbols:bookmark' : 'material-symbols:bookmark-outline'" />
+                <span>收藏</span>
+              </button>
+              
+              <button 
+                class="action-btn share-btn" 
+                @click="showShareOptions = !showShareOptions"
+                title="分享"
+              >
+                <Icon icon="material-symbols:share" />
+                <span>分享</span>
+              </button>
+              
+              <!-- 分享选项下拉菜单 -->
+              <div v-if="showShareOptions" class="share-options">
+                <button @click="shareToSocial('wechat')" class="share-option-btn">
+                  <Icon icon="ri:wechat-fill" /> 微信
                 </button>
-                <button class="share-btn" title="分享到微博">
-                  <i class="fab fa-weibo"></i>
+                <button @click="shareToSocial('weibo')" class="share-option-btn">
+                  <Icon icon="ri:weibo-fill" /> 微博
                 </button>
-                <button class="share-btn" title="分享到QQ">
-                  <i class="fab fa-qq"></i>
+                <button @click="shareToSocial('qq')" class="share-option-btn">
+                  <Icon icon="ri:qq-fill" /> QQ
+                </button>
+                <button @click="copyShareLink" class="share-option-btn">
+                  <Icon icon="material-symbols:link" /> 复制链接
                 </button>
               </div>
             </div>
@@ -203,14 +227,14 @@
               <div class="comment-content">{{ comment.content }}</div>
               <div class="comment-actions">
                 <button @click="replyToComment(comment)" class="action-button reply-button">
-                  <i class="reply-icon fas fa-reply"></i> 回复
+                  <Icon icon="material-symbols:reply" class="reply-icon" /> 回复
                 </button>
                 <button 
                   @click="likeComment(comment)" 
                   class="action-button like-button" 
                   :class="{ 'liked': (comment as any).isLiked }"
                 >
-                  <i class="like-icon fas" :class="(comment as any).isLiked ? 'fa-heart' : 'fa-heart-o'"></i>
+                  <Icon :icon="(comment as any).isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="like-icon" />
                   <span>{{ (comment as any).likes || 0 }}</span>
                 </button>
               </div>
@@ -252,7 +276,7 @@
                       class="action-button like-button" 
                       :class="{ 'liked': (reply as any).isLiked }"
                     >
-                      <i class="like-icon fas" :class="(reply as any).isLiked ? 'fa-heart' : 'fa-heart-o'"></i>
+                      <Icon :icon="(reply as any).isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="like-icon" />
                       <span>{{ (reply as any).likes || 0 }}</span>
                     </button>
                   </div>
@@ -283,9 +307,7 @@
     
     <!-- 回到顶部按钮 -->
     <div v-if="showBackToTop" @click="scrollToTop" class="back-to-top">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="back-to-top-icon">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-      </svg>
+      <Icon icon="material-symbols:arrow-upward" class="back-to-top-icon" />
     </div>
   </div>
 </template> 
@@ -295,6 +317,7 @@ import { defineComponent, ref, computed, onMounted, watch, onBeforeUnmount, next
 import { useRoute, useRouter } from 'vue-router';
 import { blogService, type Blog, type BlogComment } from '../services/blogService';
 import { useUserStore } from '../stores/userStore';
+import { Icon } from '@iconify/vue';
 
 // 导入Markdown-it和插件
 import MarkdownIt from 'markdown-it';
@@ -313,6 +336,7 @@ interface ExtendedComment extends BlogComment {
 
 export default defineComponent({
   name: 'BlogDetail',
+  components: { Icon },
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -328,6 +352,8 @@ export default defineComponent({
     const commentContent = ref('');
     const submittingComment = ref(false);
     const isLiked = ref(false);
+    const isFavorite = ref(false);
+    const showShareOptions = ref(false);
     const replyingToComment = ref<BlogComment | null>(null);
     const replyContent = ref('');
     const submittingReply = ref(false);
@@ -385,13 +411,13 @@ export default defineComponent({
               <button class="copy-btn" onclick="
                 const el = this.parentNode.parentNode.querySelector('code');
                 navigator.clipboard.writeText(el.textContent);
-                this.textContent = '已复制';
+                this.innerHTML = '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 24 24\'><path fill=\'currentColor\' d=\'M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z\'/></svg> 已复制';
                 this.classList.add('copied');
                 setTimeout(() => {
-                  this.textContent = '复制';
+                  this.innerHTML = '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 24 24\'><path fill=\'currentColor\' d=\'M19 21H8V7h11m0-2H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m-3-4H4c-1.1 0-2 .9-2 2v14h2V3h12z\'/></svg> 复制';
                   this.classList.remove('copied');
                 }, 1500);
-              ">复制</button>
+              "><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'><path fill='currentColor' d='M19 21H8V7h11m0-2H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2m-3-4H4c-1.1 0-2 .9-2 2v14h2V3h12z'/></svg> 复制</button>
             </div>
             ${match}`;
         })
@@ -567,6 +593,13 @@ export default defineComponent({
       
       // 初始化进度
       updateReadingProgress();
+      
+      // 添加点击外部关闭分享选项
+      document.addEventListener('click', (e) => {
+        if (showShareOptions.value && e.target && !(e.target as Element).closest('.share-btn') && !(e.target as Element).closest('.share-options')) {
+          showShareOptions.value = false;
+        }
+      });
     });
     
     // 回复评论
@@ -792,6 +825,83 @@ export default defineComponent({
         console.error('点赞操作失败:', err);
         // 不弹窗提示错误，因为模拟数据会处理
       }
+    };
+    
+    // 收藏博客
+    const toggleFavorite = async () => {
+      if (!isUserLoggedIn.value) {
+        alert('请先登录再收藏');
+        return;
+      }
+      
+      if (!blogId.value || !blog.value) {
+        console.error('无法收藏：博客ID无效或博客为空');
+        return;
+      }
+      
+      // 乐观更新UI
+      isFavorite.value = !isFavorite.value;
+      
+      const actionType = isFavorite.value ? '收藏' : '取消收藏';
+      
+      try {
+        // 这里应该有一个API调用来收藏/取消收藏博客
+        // 目前处于演示目的，使用模拟数据
+        console.log(`${actionType}博客, blogId:`, blogId.value);
+        
+        // 模拟API请求成功
+        setTimeout(() => {
+          console.log(`成功${actionType}博客`);
+        }, 300);
+      } catch (err) {
+        // 如果失败，恢复UI状态
+        console.error(`${actionType}操作失败:`, err);
+        isFavorite.value = !isFavorite.value;
+        alert(`${actionType}失败，请稍后重试`);
+      }
+    };
+    
+    // 分享到社交媒体
+    const shareToSocial = (platform: string) => {
+      if (!blog.value) return;
+      
+      const blogUrl = window.location.href;
+      const title = blog.value.title;
+      const summary = blog.value.summary || '来看看这篇精彩的文章...';
+      
+      let shareUrl = '';
+      
+      switch (platform) {
+        case 'wechat':
+          // 微信分享通常需要使用微信SDK，这里仅作示例
+          alert('请使用微信扫一扫功能分享此页面');
+          break;
+        case 'weibo':
+          shareUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(blogUrl)}&title=${encodeURIComponent(title)}&pic=&appkey=`;
+          window.open(shareUrl, '_blank');
+          break;
+        case 'qq':
+          shareUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(blogUrl)}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(summary)}`;
+          window.open(shareUrl, '_blank');
+          break;
+        default:
+          console.error('不支持的分享平台:', platform);
+      }
+      
+      // 分享后关闭分享选项
+      showShareOptions.value = false;
+    };
+    
+    // 复制分享链接
+    const copyShareLink = () => {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('链接已复制到剪贴板');
+        showShareOptions.value = false;
+      }).catch(err => {
+        console.error('复制链接失败:', err);
+        alert('复制失败，请手动复制链接');
+      });
     };
     
     // 格式化日期
@@ -1020,6 +1130,9 @@ export default defineComponent({
       }
       window.removeEventListener('scroll', handleWindowScroll);
       window.removeEventListener('scroll', debounce(updateReadingProgress, 10));
+      
+      // 清理点击事件监听
+      document.removeEventListener('click', () => {});
     });
     
     const showBackToTop = ref(false);
@@ -1073,6 +1186,8 @@ export default defineComponent({
       commentContent,
       submittingComment,
       isLiked,
+      isFavorite,
+      showShareOptions,
       replyingToComment,
       replyContent,
       submittingReply,
@@ -1084,6 +1199,9 @@ export default defineComponent({
       formatContent,
       submitComment,
       toggleLike,
+      toggleFavorite,
+      shareToSocial,
+      copyShareLink,
       replyToComment,
       cancelReply,
       submitReply,
@@ -1258,55 +1376,73 @@ export default defineComponent({
 .action-buttons {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
+  position: relative;
 }
 
-.like-button {
+.action-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   background-color: #f3f4f6;
   border: none;
   color: #4b5563;
-  padding: 0.5rem 1.25rem;
+  padding: 0.5rem 1rem;
   border-radius: 20px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.like-button:hover {
+.action-btn:hover {
   background-color: #e5e7eb;
+  transform: translateY(-2px);
 }
 
-.like-button.liked {
+.action-btn.active {
+  background-color: #f9f9f9;
+}
+
+.like-btn.active {
   background-color: #fee2e2;
   color: #ef4444;
 }
 
-.share-buttons {
-  display: flex;
-  gap: 0.75rem;
+.collect-btn.active {
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
-.share-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+.share-options {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem;
+  z-index: 1000;
+  margin-top: 0.5rem;
+  min-width: 150px;
+}
+
+.share-option-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: #f3f4f6;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: none;
   border: none;
-  color: #4b5563;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  color: #4b5563;
+  transition: all 0.2s;
+  border-radius: 4px;
 }
 
-.share-btn:hover {
-  background-color: #e5e7eb;
-  color: #1d4ed8;
-  transform: translateY(-2px);
+.share-option-btn:hover {
+  background-color: #f3f4f6;
 }
 
 @media (max-width: 768px) {
