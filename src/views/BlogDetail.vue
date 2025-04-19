@@ -311,6 +311,7 @@ import Valine from 'valine';
 // 导入Markdown-it和插件
 import MarkdownIt from 'markdown-it';
 import MarkdownItPrism from 'markdown-it-prism';
+import Prism from 'prismjs';
 
 // 导入Prism样式
 import 'prismjs/themes/prism.css';
@@ -378,7 +379,20 @@ export default defineComponent({
     });
     
     // 使用markdown-it-prism插件
-    md.use(MarkdownItPrism);
+    // 替换直接使用插件的方式，改为手动创建prism高亮功能
+    // md.use(MarkdownItPrism);
+    
+    // 手动添加代码高亮支持
+    md.options.highlight = (str, lang) => {
+      if (lang && Prism.languages[lang]) {
+        try {
+          return `<pre class="language-${lang}"><code>${Prism.highlight(str, Prism.languages[lang], lang)}</code></pre>`;
+        } catch (e) {
+          console.error('Prism highlighting error:', e);
+        }
+      }
+      return `<pre class="language-${lang || 'text'}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+    };
     
     // 格式化内容
     const formatContent = (content: string): string => {

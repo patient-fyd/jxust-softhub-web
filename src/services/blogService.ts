@@ -90,7 +90,9 @@ export const blogService = {
   // 获取博客详情
   getBlogById: async (blogId: string | number): Promise<BlogDetailResponse> => {
     try {
-      const response = await axios.get(`/api/blog/v1/blog/${blogId}`);
+      const response = await axios.get(`/api/blog/v1/blog/detail`, {
+        params: { blogId: blogId }
+      });
       return response.data;
     } catch (error) {
       console.error('获取博客详情失败:', error);
