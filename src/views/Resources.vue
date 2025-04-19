@@ -1087,6 +1087,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 1001;
 }
 
 .resource-detail-modal {

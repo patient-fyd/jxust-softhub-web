@@ -495,65 +495,428 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-container {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 650px;
+  max-width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 2001;
+}
+
+.modal-header {
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ebeef5;
+  background-color: #fff;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 20px;
+  color: #303133;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #909399;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #409eff;
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 140px);
+  background-color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #ebeef5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background-color: #fff;
+}
+
 .upload-form {
   max-height: 60vh;
   overflow-y: auto;
   padding-right: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.full-width {
+.form-group {
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #606266;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: #f5f7fa;
+  color: #303133;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64,158,255,0.2);
+  background-color: #ffffff;
+}
+
+.form-control.has-error {
+  border-color: #f56c6c;
+  background-color: #fef0f0;
+}
+
+textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.error-message {
+  color: #f56c6c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* 标签输入样式 */
+.tags-input-container {
+  background-color: #f5f7fa;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+}
+
+.tags-input-container:focus-within {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64,158,255,0.2);
+  background-color: #ffffff;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tag-item {
+  display: inline-flex;
+  align-items: center;
+  background-color: #ecf5ff;
+  color: #409eff;
+  border-radius: 4px;
+  padding: 0 8px;
+  height: 28px;
+  font-size: 13px;
+}
+
+.tag-remove {
+  margin-left: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.tag-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 6px 0;
+  outline: none;
+}
+
+.common-tags {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.common-tags span:first-child {
+  color: #909399;
+  font-size: 13px;
+}
+
+.common-tag {
+  display: inline-block;
+  background-color: #f0f2f5;
+  color: #606266;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.common-tag:hover {
+  background-color: #e6f7ff;
+  color: #409eff;
+}
+
+/* 文件上传样式 */
+.file-upload-container {
   width: 100%;
 }
 
-.cover-uploader {
-  width: 200px;
-}
-
-.cover-placeholder {
-  width: 200px;
-  height: 150px;
+.file-upload-box {
+  border: 2px dashed #dcdfe6;
+  border-radius: 8px;
+  background-color: #f5f7fa;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  justify-content: center;
+  height: 120px;
   cursor: pointer;
-  background-color: #fcfcfc;
-  transition: border-color 0.3s;
-}
-
-.cover-placeholder:hover {
-  border-color: #409eff;
-}
-
-.cover-placeholder i {
-  font-size: 28px;
-  color: #8c939d;
-  margin-bottom: 10px;
-}
-
-.cover-preview {
-  width: 200px;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid #d9d9d9;
-}
-
-.cover-uploader__tip {
-  color: #909399;
-  font-size: 12px;
-  margin-top: 7px;
-  line-height: 1.5;
-}
-
-:deep(.el-upload-list__item) {
   transition: all 0.3s;
 }
 
-:deep(.el-upload-list__item:hover) {
+.file-upload-box:hover {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.upload-icon {
+  font-size: 32px;
+  color: #909399;
+  margin-bottom: 10px;
+}
+
+.upload-text {
+  color: #606266;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #fff;
+  border-radius: 4px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.file-name {
+  font-weight: 500;
+  color: #303133;
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.file-size {
+  color: #909399;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.remove-file-btn {
+  background: transparent;
+  border: none;
+  color: #909399;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.remove-file-btn:hover {
+  color: #f56c6c;
+  background-color: rgba(245, 108, 108, 0.1);
+}
+
+.upload-tip {
+  margin-top: 8px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.has-error .file-upload-box {
+  border-color: #f56c6c;
+  background-color: #fef0f0;
+}
+
+/* 封面上传样式 */
+.cover-upload-container {
+  display: flex;
+  gap: 16px;
+}
+
+.cover-upload-box {
+  width: 200px;
+  height: 150px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 8px;
   background-color: #f5f7fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.cover-upload-box:hover {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.cover-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-upload-tip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 按钮样式 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  text-align: center;
+  box-sizing: border-box;
+  outline: none;
+  transition: .2s;
+  font-weight: 500;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 6px;
+  height: 40px;
+  min-width: 88px;
+}
+
+.btn-default {
+  background-color: #f0f2f5;
+  color: #606266;
+  border: 1px solid #dcdfe6;
+}
+
+.btn-default:hover {
+  background-color: #e6e8eb;
+  color: #303133;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #409eff;
+  border-color: #409eff;
+}
+
+.btn-primary:hover {
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+}
+
+.btn-primary:disabled {
+  background-color: #a0cfff;
+  border-color: #a0cfff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style> 
