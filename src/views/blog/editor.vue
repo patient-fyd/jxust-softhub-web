@@ -517,6 +517,7 @@ export default {
   position: relative;
   overflow: hidden;
   width: 100%;
+  height: calc(100vh - 56px); /* 设置为视口高度减去头部高度 */
 }
 
 .title-input {
@@ -882,5 +883,11 @@ textarea.form-control {
     flex: 0 0 100%;
     height: 50%;
   }
+}
+
+/* 确保编辑器填满容器 */
+:deep(.markdown-editor-container) {
+  flex: 1;
+  height: 100%;
 }
 </style>

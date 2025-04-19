@@ -1,13 +1,16 @@
 <template>
-  <div class="markdown-editor-container">
-    <Editor
-      :value="modelValue"
-      :plugins="plugins"
-      :locale="locale"
-      :uploadImages="uploadImages"
-      mode="split"
-      @change="handleEditorChange"
-    />
+  <div class="markdown-editor-container" ref="editorContainer">
+    <div class="editor-wrapper" ref="editorWrapper">
+      <Editor
+        :value="modelValue"
+        :plugins="plugins"
+        :locale="locale"
+        :uploadImages="uploadImages"
+        mode="split"
+        @change="handleEditorChange"
+        class="full-height-editor"
+      />
+    </div>
     <div class="save-indicator" v-if="showSaveIndicator">
       <span>保存成功</span>
     </div>
@@ -15,7 +18,7 @@
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, onMounted, nextTick, watch } from 'vue';
 
 // 导入ByteMD编辑器
 import { Editor } from '@bytemd/vue-next';
@@ -57,6 +60,10 @@ export default defineComponent({
     // 创建保存指示器状态
     const showSaveIndicator = ref(false);
     let saveIndicatorTimer = null;
+    
+    // 添加DOM引用
+    const editorContainer = ref(null);
+    const editorWrapper = ref(null);
 
     // 配置ByteMD插件
     const plugins = [
@@ -174,24 +181,116 @@ export default defineComponent({
       }
     };
 
+    // 修复编辑器高度的函数
+    const fixEditorHeight = () => {
+      if (!editorWrapper.value) return;
+      
+      // 在编辑器包装器上添加自定义样式
+      editorWrapper.value.style.height = '100%';
+      editorWrapper.value.style.display = 'flex';
+      editorWrapper.value.style.flexDirection = 'column';
+      
+      // 查找内部元素并设置样式
+      const byteMD = editorWrapper.value.querySelector('.bytemd');
+      if (byteMD) {
+        byteMD.style.height = '100%';
+        byteMD.style.display = 'flex';
+        byteMD.style.flexDirection = 'column';
+        byteMD.style.overflow = 'hidden';
+      }
+      
+      const bytemdBody = editorWrapper.value.querySelector('.bytemd-body');
+      if (bytemdBody) {
+        bytemdBody.style.flex = '1';
+        bytemdBody.style.display = 'flex';
+        bytemdBody.style.overflow = 'hidden';
+      }
+      
+      // 为左右两栏设置样式
+      const editorDivs = editorWrapper.value.querySelectorAll('.bytemd-editor > div, .bytemd-preview > div');
+      editorDivs.forEach(div => {
+        div.style.height = '100%';
+        div.style.minHeight = '600px';
+        div.style.display = 'flex';
+        div.style.flexDirection = 'column';
+      });
+      
+      // 为编辑器和预览区设置样式
+      const cmEditor = editorWrapper.value.querySelector('.bytemd-editor .cm-editor, .bytemd-editor .CodeMirror');
+      if (cmEditor) {
+        cmEditor.style.height = '100%';
+        cmEditor.style.flex = '1';
+        cmEditor.style.minHeight = '600px';
+      }
+      
+      const markdownBody = editorWrapper.value.querySelector('.markdown-body');
+      if (markdownBody) {
+        markdownBody.style.minHeight = '600px';
+        markdownBody.style.flex = '1';
+      }
+
+      console.log('[调试] 编辑器高度修复已应用');
+    };
+    
+    // 在组件挂载和更新后修复高度
+    onMounted(() => {
+      nextTick(() => {
+        fixEditorHeight();
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', fixEditorHeight);
+      });
+    });
+    
+    // 监听内容变化，如果有内容变化，重新修复高度
+    watch(() => props.modelValue, () => {
+      nextTick(fixEditorHeight);
+    });
+
     return {
       plugins,
       locale,
       uploadImages,
       handleEditorChange,
-      showSaveIndicator
+      showSaveIndicator,
+      editorContainer,
+      editorWrapper
     };
   }
 });
 </script>
 
 <style>
+/* 修改编辑器容器 */
 .markdown-editor-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 添加编辑器包装器样式 */
+.editor-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 强制编辑器全高度 */
+.full-height-editor {
+  height: 100% !important;
+  min-height: 700px !important; /* 设置一个较大的最小高度 */
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .save-indicator {
@@ -242,11 +341,13 @@ export default defineComponent({
   100% { opacity: 0; }
 }
 
+/* 关键修复：确保ByteMD编辑器占满容器 */
 :deep(.bytemd) {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 :deep(.bytemd-toolbar) {
@@ -258,6 +359,7 @@ export default defineComponent({
   border-bottom: 1px solid #ebeef5;
   padding: 8px 16px;
   box-sizing: border-box;
+  z-index: 2;
 }
 
 :deep(.bytemd-toolbar-left) {
@@ -291,11 +393,13 @@ export default defineComponent({
   color: #409eff;
 }
 
+/* 修复内容区域未填充的问题 */
 :deep(.bytemd-body) {
   flex: 1;
   display: flex;
   overflow: hidden;
   width: 100%;
+  min-height: 0;
 }
 
 :deep(.bytemd-split) {
@@ -303,13 +407,57 @@ export default defineComponent({
   width: 100%;
   height: 100%;
   background-color: #ffffff;
+  overflow: hidden;
 }
 
 :deep(.bytemd-editor),
 :deep(.bytemd-preview) {
   width: 50% !important;
-  flex: 0 0 50%;
+  flex: 1;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 强制填充内部div的高度 */
+:deep(.bytemd-editor > div),
+:deep(.bytemd-preview > div) {
+  height: 100% !important;
+  flex: 1 !important;
+  min-height: 600px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: none !important;
+}
+
+/* 确保编辑器和预览区内容填充 */
+:deep(.bytemd-editor .cm-editor),
+:deep(.bytemd-editor .CodeMirror) {
+  height: 100% !important;
+  flex: 1 !important;
+  min-height: 600px !important;
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+}
+
+:deep(.bytemd-preview) {
+  border-left: 1px solid #ebeef5;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+:deep(.markdown-body) {
+  padding: 20px 0;
+  min-height: 600px !important;
+  flex: 1 !important;
+}
+
+/* 强制占满高度的技巧 */
+:deep(.cm-scroller) {
+  min-height: 600px !important;
+}
+
+:deep(.cm-content) {
+  min-height: 600px !important;
 }
 
 /* 响应式调整 */
