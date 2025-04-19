@@ -41,6 +41,21 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
+    path: '/blog/editor',
+    name: 'BlogEditor',
+    component: () => import('../views/blog/editor.vue'),
+    meta: { requiresAuth: true } // 需要登录才能访问
+  },
+  {
+    path: '/blog/fullscreen-editor',
+    name: 'FullscreenBlogEditor',
+    component: () => import('../views/blog/FullscreenEditor.vue'), 
+    meta: { 
+      requiresAuth: true,
+      fullscreen: true  // 标记为全屏页面，不显示导航栏和页脚
+    }
+  },
+  {
     path: '/activities',
     name: 'Activities',
     component: () => import('../views/Activities.vue')
@@ -171,6 +186,20 @@ router.beforeEach((to, from, next) => {
     if (!newsId || newsId === 'undefined' || newsId === 'null' || newsId === 'NaN') {
       console.warn('检测到无效的新闻ID:', newsId);
       next({ name: 'News' }); // 重定向到新闻列表页
+      return;
+    }
+  }
+  
+  // 检查是否需要登录权限
+  if (to.meta.requiresAuth) {
+    // 从localStorage获取token判断是否已登录
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // 未登录，重定向到登录页面
+      next({
+        name: 'Login',
+        query: { redirect: to.fullPath } // 登录后重定向回原页面
+      });
       return;
     }
   }

@@ -110,7 +110,7 @@ export default defineComponent({
     };
     
     // 导航到博客详情页
-    const navigateToBlogDetail = (blogId: number) => {
+    const navigateToBlogDetail = (blogId: number | string) => {
       console.log('导航到博客详情页:', blogId);
       router.push({
         path: '/blog/detail',

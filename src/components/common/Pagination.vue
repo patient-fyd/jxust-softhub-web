@@ -76,7 +76,7 @@ export default defineComponent({
       default: 1
     },
     pageSizes: {
-      type: Array,
+      type: Array as () => number[],
       default: () => [12, 24, 36, 48]
     },
     showSizeChanger: {
