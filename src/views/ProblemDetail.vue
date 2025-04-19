@@ -237,7 +237,7 @@ export default defineComponent({
     ]);
     
     // 语言模板代码
-    const languageTemplates = {
+    const languageTemplates: Record<string, string> = {
       javascript: `/**
  * @param {number[]} nums
  * @param {number} target
