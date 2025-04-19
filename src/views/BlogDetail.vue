@@ -167,7 +167,7 @@
             <textarea 
               v-model="commentContent" 
               placeholder="发表您的评论..." 
-              rows="4"
+              rows="6"
               :disabled="!isUserLoggedIn"
             ></textarea>
             <div class="form-footer">
@@ -1492,8 +1492,8 @@ export default defineComponent({
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 2rem;
-  margin-top: 1rem;
-  width: 100%;
+  margin: 0 auto 2rem;
+  max-width: 1200px;
   overflow: hidden;
 }
 
@@ -1883,6 +1883,44 @@ export default defineComponent({
   .sidebar-section {
     margin-top: 0; /* 移除顶部间距，使用父元素的gap控制 */
   }
+  
+  /* 小屏幕上调整评论区宽度 */
+  .comments-section {
+    max-width: 100%;
+  }
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+}
+
+.back-to-top:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 992px) {
+  /* 在小屏幕设备上调整间距 */
+  .sidebar-section {
+    margin-top: 0; /* 移除顶部间距，使用父元素的gap控制 */
+  }
+  
+  /* 小屏幕上调整评论区宽度 */
+  .comments-section {
+    max-width: 100%;
+  }
 }
 
 </style>
@@ -2238,3 +2276,8 @@ pre[class*="language-"].line-numbers {
   }
 }
 </style>
+
+.comment-form textarea {
+  width: 100%;
+  resize: vertical;
+}
