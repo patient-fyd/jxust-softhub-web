@@ -128,62 +128,14 @@
     </div>
 
     <!-- 分页器 -->
-    <div v-if="filteredResources.length > 0" class="pagination-container">
-      <div class="pagination">
-        <div class="pagination-info">
-          共 <span class="pagination-total">{{ totalResources }}</span> 条
-        </div>
-        
-        <div class="pagination-size">
-          <select v-model="pagination.pageSize" @change="handleSizeChange" class="pagination-select">
-            <option :value="12">12条/页</option>
-            <option :value="24">24条/页</option>
-            <option :value="36">36条/页</option>
-            <option :value="48">48条/页</option>
-          </select>
-        </div>
-        
-        <div class="pagination-buttons">
-          <button 
-            class="pagination-button" 
-            :disabled="pagination.currentPage === 1"
-            @click="handleCurrentChange(pagination.currentPage - 1)"
-          >
-            上一页
-          </button>
-          
-          <button 
-            v-for="page in displayedPages" 
-            :key="page"
-            class="pagination-button" 
-            :class="{ 'active': pagination.currentPage === page }"
-            @click="handleCurrentChange(page)"
-          >
-            {{ page }}
-          </button>
-          
-          <button 
-            class="pagination-button" 
-            :disabled="pagination.currentPage === totalPages"
-            @click="handleCurrentChange(pagination.currentPage + 1)"
-          >
-            下一页
-          </button>
-        </div>
-        
-        <div class="pagination-jumper">
-          前往
-          <input 
-            type="number" 
-            class="pagination-jumper-input" 
-            v-model="jumpPage" 
-            min="1"
-            :max="totalPages"
-          >
-          页
-          <button class="pagination-jumper-button" @click="jumpToPage">GO</button>
-        </div>
-      </div>
+    <div v-if="filteredResources.length > 0">
+      <Pagination 
+        :total="totalResources" 
+        v-model:currentPage="pagination.currentPage"
+        v-model:pageSize="pagination.pageSize"
+        @change="handlePageChange"
+        @sizeChange="handleSizeChange"
+      />
     </div>
 
     <!-- 上传资源对话框 -->
@@ -272,6 +224,7 @@ import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch
 import ResourceCard from '@/components/resources/ResourceCard.vue';
 import UploadResourceModal from '@/components/resources/UploadResourceModal.vue';
 import { Icon } from '@iconify/vue';
+import Pagination from '@/components/common/Pagination.vue';
 
 // 资源类型接口
 export interface Resource {
@@ -299,7 +252,8 @@ export default defineComponent({
   components: {
     ResourceCard,
     UploadResourceModal,
-    Icon
+    Icon,
+    Pagination
   },
   
   setup() {
@@ -314,9 +268,6 @@ export default defineComponent({
       currentPage: 1,
       pageSize: 12
     });
-    
-    // 页面跳转输入
-    const jumpPage = ref<number | null>(null);
     
     // 分类列表
     const categories = ref<Category[]>([
@@ -448,26 +399,6 @@ export default defineComponent({
       const start = (pagination.currentPage - 1) * pagination.pageSize;
       const end = start + pagination.pageSize;
       return filteredResources.value.slice(start, end);
-    });
-    
-    // 计算属性：显示的页码
-    const displayedPages = computed(() => {
-      const current = pagination.currentPage;
-      const total = totalPages.value;
-      
-      if (total <= 7) {
-        return Array.from({ length: total }, (_, i) => i + 1);
-      }
-      
-      if (current <= 3) {
-        return [1, 2, 3, 4, 5, '...', total];
-      }
-      
-      if (current >= total - 2) {
-        return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-      }
-      
-      return [1, '...', current - 1, current, current + 1, '...', total];
     });
     
     // 生成模拟资源数据
@@ -713,23 +644,14 @@ export default defineComponent({
     };
     
     // 处理分页大小变化
-    const handleSizeChange = (event: Event) => {
-      pagination.pageSize = Number((event.target as HTMLSelectElement).value);
+    const handleSizeChange = (size: number) => {
+      pagination.pageSize = size;
       pagination.currentPage = 1;
     };
     
     // 处理页码变化
-    const handleCurrentChange = (page: number) => {
-      if (page >= 1 && page <= totalPages.value) {
-        pagination.currentPage = page;
-      }
-    };
-    
-    // 跳转到指定页
-    const jumpToPage = () => {
-      if (jumpPage.value !== null && jumpPage.value > 0 && jumpPage.value <= totalPages.value) {
-        pagination.currentPage = jumpPage.value;
-      }
+    const handlePageChange = (page: number) => {
+      pagination.currentPage = page;
     };
     
     // 打开上传对话框
@@ -821,7 +743,6 @@ export default defineComponent({
       resources,
       filteredResources,
       pagination,
-      jumpPage,
       categories,
       fileTypes,
       sortOptions,
@@ -835,7 +756,6 @@ export default defineComponent({
       totalResources,
       totalPages,
       currentPageResources,
-      displayedPages,
       hasFilters,
       getCategoryName,
       formatDate,
@@ -845,8 +765,7 @@ export default defineComponent({
       handleSearch,
       handleFilterChange,
       handleSizeChange,
-      handleCurrentChange,
-      jumpToPage,
+      handlePageChange,
       openUploadModal,
       handleUploadSuccess,
       handleUploadModalClose,
@@ -1142,113 +1061,6 @@ export default defineComponent({
   margin-top: 8px;
   color: #909399;
   font-size: 13px;
-}
-
-/* 分页器 */
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 32px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.pagination-info {
-  font-size: 14px;
-  color: #606266;
-}
-
-.pagination-total {
-  font-weight: bold;
-  color: #409eff;
-}
-
-.pagination-size {
-  display: flex;
-  align-items: center;
-}
-
-.pagination-select {
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  outline: none;
-  color: #606266;
-  cursor: pointer;
-}
-
-.pagination-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pagination-button {
-  min-width: 32px;
-  height: 32px;
-  padding: 0 4px;
-  text-align: center;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #606266;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.pagination-button:hover:not(:disabled):not(.active) {
-  color: #409eff;
-  border-color: #c6e2ff;
-}
-
-.pagination-button.active {
-  color: #fff;
-  background-color: #409eff;
-  border-color: #409eff;
-}
-
-.pagination-button:disabled {
-  color: #c0c4cc;
-  cursor: not-allowed;
-}
-
-.pagination-jumper {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #606266;
-}
-
-.pagination-jumper-input {
-  width: 50px;
-  height: 32px;
-  margin: 0 6px;
-  text-align: center;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  outline: none;
-}
-
-.pagination-jumper-button {
-  height: 32px;
-  margin-left: 6px;
-  padding: 0 10px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background-color: #f4f4f5;
-  color: #606266;
-  cursor: pointer;
-}
-
-.pagination-jumper-button:hover {
-  color: #409eff;
-  border-color: #c6e2ff;
 }
 
 /* 模态框样式 */
