@@ -32,7 +32,12 @@
     
     <!-- 博客列表 -->
     <div v-else class="blog-list">
-      <div v-for="blog in blogs" :key="blog.blogId || blog.id" class="blog-item">
+      <div 
+        v-for="blog in blogs" 
+        :key="blog.blogId || blog.id" 
+        class="blog-item"
+        @click="navigateToBlog(blog.blogId || blog.id)"
+      >
         <div class="blog-content">
           <h2 class="blog-title">{{ blog.title }}</h2>
           <div class="blog-desc">{{ blog.summary || (blog.content && blog.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...') || '暂无描述' }}</div>
@@ -52,8 +57,32 @@
           </div>
         </div>
         
-        <div class="blog-image" v-if="blog.coverImage">
-          <img :src="blog.coverImage" alt="封面图" />
+        <div class="blog-image">
+          <svg viewBox="0 0 120 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f0f5ff"/>
+                <stop offset="100%" stop-color="#e6f0ff"/>
+              </linearGradient>
+              <linearGradient id="imgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6b9fff"/>
+                <stop offset="100%" stop-color="#4785ff"/>
+              </linearGradient>
+            </defs>
+            <!-- 背景 -->
+            <rect width="120" height="80" fill="url(#bgGradient)" rx="8" ry="8"/>
+
+            <!-- 图片图标 -->
+            <rect x="45" y="20" width="30" height="25" rx="2" fill="url(#imgGradient)"/>
+            <circle cx="55" cy="30" r="3" fill="#ffffff"/>
+            <path d="M50,40 L55,35 L60,38 L65,30 L70,40 Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.5"/>
+
+            <!-- 装饰图案 -->
+            <circle cx="30" cy="15" r="4" fill="#d1e4ff" opacity="0.7"/>
+            <circle cx="90" cy="15" r="2" fill="#d1e4ff" opacity="0.5"/>
+            <circle cx="100" cy="60" r="3" fill="#d1e4ff" opacity="0.6"/>
+            <circle cx="20" cy="60" r="2" fill="#d1e4ff" opacity="0.5"/>
+            </svg>
         </div>
       </div>
     </div>
@@ -309,6 +338,12 @@ export default defineComponent({
       loadBlogs();
     });
     
+    // 导航到博客详情页
+    const navigateToBlog = (blogId: string | number | undefined) => {
+      if (!blogId) return;
+      router.push(`/blog/detail?blogId=${blogId}`);
+    };
+    
     return {
       blogs,
       loading,
@@ -324,7 +359,8 @@ export default defineComponent({
       parseTags,
       changePage,
       jumpToPage,
-      handlePageSizeChange
+      handlePageSizeChange,
+      navigateToBlog
     };
   }
 });
@@ -377,13 +413,26 @@ export default defineComponent({
   flex-direction: column;
   gap: 16px;
   margin-bottom: 20px;
+  padding: 0 10px;
 }
 
 .blog-item {
   display: flex;
-  padding: 20px 0;
+  padding: 20px;
   border-bottom: 1px solid #f0f0f0;
   gap: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-items: center;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.blog-item:hover {
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(71, 133, 255, 0.1);
 }
 
 .blog-item:hover .blog-title {
@@ -394,20 +443,24 @@ export default defineComponent({
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* 防止内容溢出 */
 }
 
 .blog-title {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: #1f2937;
   transition: color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .blog-desc {
   color: #6b7280;
   font-size: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -421,6 +474,7 @@ export default defineComponent({
   align-items: center;
   font-size: 13px;
   color: #9ca3af;
+  margin-top: auto;
 }
 
 .meta-left {
@@ -430,32 +484,95 @@ export default defineComponent({
 }
 
 .blog-author {
-  color: #6b7280;
+  color: #5b92ff;
   font-weight: 500;
 }
 
+.blog-date, .blog-views, .blog-comments {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.blog-date::before {
+  content: '•';
+  color: #d1d5db;
+  margin-right: 4px;
+}
+
+.meta-right {
+  display: flex;
+  align-items: center;
+}
+
+.blog-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .blog-image {
-  width: 120px;
-  height: 80px;
+  width: 130px;
+  height: 90px;
   flex-shrink: 0;
-  border-radius: 4px;
+  border-radius: 10px;
   overflow: hidden;
+  background-color: #f0f5ff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
 .blog-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.blog-item:hover .blog-image {
+  box-shadow: 0 6px 16px rgba(71, 133, 255, 0.15);
+}
+
+.blog-item:hover .blog-image img {
+  transform: scale(1.08);
+}
+
+.default-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f5ff;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.placeholder-text {
+  position: absolute;
+  bottom: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tag {
-  padding: 2px 8px;
-  background-color: #f3f4f6;
-  border-radius: 4px;
+  padding: 3px 10px;
+  background-color: #f0f5ff;
+  border-radius: 12px;
   font-size: 12px;
-  color: #6b7280;
+  color: #5b92ff;
   display: inline-block;
   margin-left: 8px;
+  transition: all 0.2s;
+}
+
+.tag:hover {
+  background-color: #e1eaff;
 }
 
 /* 骨架屏 */
@@ -642,13 +759,30 @@ export default defineComponent({
 @media (max-width: 768px) {
   .blog-item {
     flex-direction: column;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 5px;
   }
   
   .blog-image {
     width: 100%;
     height: 160px;
-    margin-top: 12px;
+    margin-top: 0;
+    margin-bottom: 12px;
     order: -1;
+    border-radius: 8px;
+  }
+  
+  .blog-title {
+    margin-top: 0;
+    font-size: 16px;
+    margin-bottom: 8px;
+    -webkit-line-clamp: 1;
+  }
+  
+  .blog-desc {
+    font-size: 13px;
+    margin-bottom: 10px;
   }
   
   .pagination {
@@ -664,6 +798,11 @@ export default defineComponent({
   .page-jumper {
     margin-top: 8px;
   }
+
+  .meta-left {
+    font-size: 12px;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -674,6 +813,25 @@ export default defineComponent({
   .meta-left {
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .blog-tags {
+    margin-top: 8px;
+  }
+
+  .blog-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .meta-right {
+    width: 100%;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
   }
 }
 </style>
