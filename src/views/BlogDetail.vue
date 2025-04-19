@@ -179,6 +179,13 @@
                 <span @click="addEmoji('🎉')" class="emoji-item">🎉</span>
                 <span @click="addEmoji('❤️')" class="emoji-item">❤️</span>
                 <span @click="addEmoji('🤔')" class="emoji-item">🤔</span>
+                <span @click="addEmoji('😂')" class="emoji-item">😂</span>
+                <span @click="addEmoji('🚀')" class="emoji-item">🚀</span>
+                <span @click="addEmoji('👏')" class="emoji-item">👏</span>
+                <span @click="addEmoji('🔥')" class="emoji-item">🔥</span>
+                <span @click="addEmoji('🌟')" class="emoji-item">🌟</span>
+                <span @click="addEmoji('😍')" class="emoji-item">😍</span>
+                <span @click="addEmoji('🙏')" class="emoji-item">🙏</span>
               </div>
               <button 
                 @click="submitMockComment" 
@@ -2165,6 +2172,8 @@ export default defineComponent({
   resize: vertical;
   margin-bottom: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .comment-form textarea:focus {
@@ -2177,22 +2186,34 @@ export default defineComponent({
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .comment-tips {
   font-size: 0.875rem;
   color: #6b7280;
+  margin-right: auto;
 }
 
 .emoji-picker {
   display: flex;
   gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  max-width: 60%;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .emoji-item {
   cursor: pointer;
   font-size: 1.25rem;
   transition: transform 0.2s ease;
+  padding: 0.3rem;
 }
 
 .emoji-item:hover {
@@ -2432,6 +2453,11 @@ export default defineComponent({
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+  
+  .emoji-picker {
+    max-width: 100%;
+    margin-bottom: 0.5rem;
   }
   
   .submit-button {
