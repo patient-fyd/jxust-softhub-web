@@ -50,6 +50,26 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
+    path: '/news/editor',
+    name: 'NewsEditor',
+    component: () => import('../views/news/editor.vue'),
+    meta: {
+      requiresAuth: true,
+      fullscreen: true,
+      adminOnly: true // 仅管理员可访问
+    }
+  },
+  {
+    path: '/activity/editor',
+    name: 'ActivityEditor',
+    component: () => import('../views/activity/editor.vue'),
+    meta: {
+      requiresAuth: true,
+      fullscreen: true,
+      adminOnly: true // 仅管理员可访问
+    }
+  },
+  {
     path: '/activities',
     name: 'Activities',
     component: () => import('../views/Activities.vue')
@@ -210,6 +230,33 @@ router.beforeEach((to, from, next) => {
         query: { redirect: to.fullPath } // 登录后重定向回原页面
       });
       return;
+    }
+    
+    // 检查是否需要管理员权限
+    if (to.meta.adminOnly) {
+      // 从localStorage获取用户信息
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          // 假设roleId=1是管理员权限
+          if (user.roleId !== 1) {
+            // 非管理员，重定向到首页
+            console.warn('用户尝试访问仅管理员可访问的页面:', to.path);
+            next({ name: 'Home' });
+            return;
+          }
+        } catch (e) {
+          console.error('解析用户信息失败:', e);
+          next({ name: 'Home' });
+          return;
+        }
+      } else {
+        // 没有用户信息，重定向到首页
+        console.warn('尝试访问仅管理员可访问的页面，但找不到用户信息');
+        next({ name: 'Home' });
+        return;
+      }
     }
   }
   

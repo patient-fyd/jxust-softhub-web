@@ -72,6 +72,12 @@
                 <Icon icon="mdi:newspaper" width="18" height="18" />
                 <span>发布公告</span>
               </div>
+              
+              <!-- 管理员和会长可以发布活动 -->
+              <div class="navbar-dropdown-item" v-if="canPublishNews" @click="navigateTo('/activity/editor')">
+                <Icon icon="mdi:calendar-star" width="18" height="18" />
+                <span>发布活动</span>
+              </div>
             </div>
           </teleport>
         </div>
