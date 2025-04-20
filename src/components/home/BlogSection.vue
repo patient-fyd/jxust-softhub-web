@@ -15,23 +15,27 @@
     </div>
     <div v-else class="blog-cards">
       <div v-for="blog in blogs" :key="blog.blogId || blog.id" class="blog-card">
-        <div class="blog-image" :style="blog.coverImage ? `background-image: url(${blog.coverImage})` : ''">
-          <div class="blog-type-tag">技术分享</div>
-        </div>
         <div class="blog-content">
-          <div class="blog-meta">
-            <span class="blog-date">{{ formatDate(blog.createTime || blog.createdAt) }}</span>
-            <span class="blog-views">浏览: {{ blog.viewCount }}</span>
+          <div class="blog-header">
+            <span class="blog-tag">技术分享</span>
+            <span class="blog-date">{{ formatDate(blog.createTime || '') }}</span>
           </div>
-          <h3>{{ blog.title }}</h3>
-          <p>{{ getExcerpt(blog.content) }}</p>
+          <h3 class="blog-title">{{ blog.title || '无标题' }}</h3>
+          <p class="blog-summary">{{ getExcerpt(blog.content) }}</p>
           <div class="blog-footer">
+            <div class="blog-meta">
+              <div class="meta-item">
+                <span>作者: {{ blog.authorName || '管理员' }}</span>
+              </div>
+              <div class="meta-item">
+                <span>浏览: {{ blog.viewCount || 0 }}</span>
+              </div>
+            </div>
             <button 
               v-if="blog.blogId" 
               @click="navigateToBlogDetail(blog.blogId)"
-              class="read-more">阅读更多</button>
+              class="read-more">阅读全文</button>
             <span v-else class="read-more disabled">暂无详情</span>
-            <span v-if="blog.authorName" class="blog-author">{{ blog.authorName }}</span>
           </div>
         </div>
       </div>
@@ -97,20 +101,36 @@ export default defineComponent({
     // 格式化日期
     const formatDate = (dateStr: string) => {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      try {
+        const date = new Date(dateStr);
+        // 检查是否为有效日期
+        if (isNaN(date.getTime())) return '';
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      } catch (e) {
+        console.error('日期格式化错误:', e);
+        return '';
+      }
     };
     
     // 获取内容摘要
-    const getExcerpt = (content: string) => {
-      if (!content) return '';
-      // 移除HTML标签和Markdown标记
-      const plainText = content.replace(/<[^>]+>/g, '').replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
-      return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+    const getExcerpt = (content?: string) => {
+      if (!content) return '暂无内容';
+      try {
+        // 移除HTML标签和Markdown标记
+        const plainText = content.replace(/<[^>]+>/g, '').replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
+        return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+      } catch (e) {
+        console.error('内容摘要提取错误:', e);
+        return '内容解析错误';
+      }
     };
     
     // 导航到博客详情页
     const navigateToBlogDetail = (blogId: number | string) => {
+      if (!blogId) {
+        console.warn('无效的博客ID');
+        return;
+      }
       console.log('导航到博客详情页:', blogId);
       router.push({
         path: '/blog/detail',
@@ -184,19 +204,21 @@ export default defineComponent({
   box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
-.blog-image {
-  height: 180px;
-  background-color: #e5e7eb;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  position: relative;
+.blog-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.blog-type-tag {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.blog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.blog-tag {
   background-color: #10b981;
   color: white;
   padding: 4px 8px;
@@ -205,37 +227,23 @@ export default defineComponent({
   font-weight: 500;
 }
 
-.blog-content {
-  padding: 20px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.blog-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.blog-date, .blog-views {
+.blog-date {
   color: #6b7280;
   font-size: 0.9rem;
 }
 
-.blog-card h3 {
+.blog-title {
   color: #1e40af;
-  margin-bottom: 10px;
+  margin: 0 0 12px 0;
   font-size: 1.2rem;
   line-height: 1.4;
 }
 
-.blog-card p {
+.blog-summary {
   color: #4b5563;
-  margin-bottom: 15px;
+  margin: 0 0 15px 0;
   line-height: 1.5;
   display: -webkit-box;
-  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -247,16 +255,33 @@ export default defineComponent({
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 12px;
+}
+
+.blog-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
 }
 
 .read-more {
   color: #1e40af;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-  padding: 5px 10px;
   background-color: #e0e7ff;
+  border: none;
+  padding: 5px 10px;
   border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .read-more:hover {
@@ -264,14 +289,9 @@ export default defineComponent({
 }
 
 .read-more.disabled {
-  background-color: #e0e0e0;
-  color: #909090;
+  background-color: #e5e7eb;
+  color: #9ca3af;
   cursor: not-allowed;
-}
-
-.blog-author {
-  color: #6b7280;
-  font-size: 0.9rem;
 }
 
 .loading-blogs, .blog-error, .no-blogs {
@@ -285,6 +305,21 @@ export default defineComponent({
 @media (max-width: 768px) {
   .blog-cards {
     grid-template-columns: 1fr;
+  }
+  
+  .blog-card {
+    margin-bottom: 20px;
+  }
+  
+  .blog-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .read-more {
+    width: 100%;
+    text-align: center;
   }
 }
 </style>

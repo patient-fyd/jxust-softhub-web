@@ -328,12 +328,12 @@ export default defineComponent({
 
 .btn-primary {
   color: #fff;
-  background-color: #409eff;
-  border-color: #409eff;
+  background-color: #1e40af;
+  border-color: #1e40af;
 }
 
 .btn-primary:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
+  background-color: #1e3a8a;
+  border-color: #1e3a8a;
 }
 </style> 
