@@ -3,93 +3,79 @@
     <h1 class="page-title">新闻动态</h1>
     <p class="page-subtitle">了解我们最新的动态</p>
     
-    <!-- 内部导航栏 -->
-    <div class="news-categories">
-      <div 
-        v-for="category in categories" 
-        :key="category.value"
-        :class="['category-item', { active: currentCategory === category.value }]"
-        @click="changeCategory(category.value)"
-      >
-        {{ category.label }}
+    <!-- 筛选区域 -->
+    <div class="news-filters">
+      <div class="filter-item">
+        <select v-model="filter.status" class="filter-select" @change="handleFilterChange">
+          <option value="-1">全部状态</option>
+          <option value="1">已发布</option>
+          <option value="0">待发布</option>
+          <option value="2">已下架</option>
+        </select>
       </div>
     </div>
     
     <!-- 新闻列表 -->
-    <div v-if="loading" class="loading-state">
-      <p>加载中...</p>
-    </div>
-    
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-      <button @click="loadNews" class="retry-btn">重试</button>
-    </div>
-    
-    <div v-else-if="newsList.length === 0" class="empty-state">
-      <p>暂无{{ getCategoryLabel(currentCategory) }}内容</p>
-    </div>
-    
-    <div v-else class="news-list">
-      <div v-for="news in newsList" :key="news.id" class="news-card">
-        <div class="news-image" :style="news.coverImage ? `background-image: url(${news.coverImage})` : ''">
-          <div v-if="news.newsType" class="news-type-tag" :class="getNewsTypeClass(news.newsType)">
-            {{ getNewsTypeLabel(news.newsType) }}
-          </div>
-        </div>
-        <div class="news-content">
-          <div class="news-meta">
-            <span class="news-date">{{ formatDate(news.createdAt || news.createTime) }}</span>
-            <span class="news-views">浏览: {{ news.viewCount }}</span>
-          </div>
-          <h2 class="news-title">
-            <router-link :to="`/news/detail?newsId=${news.id}`">{{ news.title }}</router-link>
-          </h2>
-          <p class="news-excerpt">{{ getExcerpt(news.content) }}</p>
-          <div class="news-footer">
-            <router-link :to="`/news/detail?newsId=${news.id}`" class="read-more-btn">阅读全文</router-link>
-            <span v-if="news.authorName" class="news-author">作者: {{ news.authorName }}</span>
-          </div>
-        </div>
+    <div class="news-content">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
       </div>
-    </div>
-    
-    <!-- 分页 -->
-    <div v-if="newsList.length > 0" class="pagination">
-      <button 
-        :disabled="currentPage <= 1" 
-        @click="changePage(currentPage - 1)" 
-        class="page-btn"
-      >
-        上一页
-      </button>
-      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-      <button 
-        :disabled="currentPage >= totalPages" 
-        @click="changePage(currentPage + 1)" 
-        class="page-btn"
-      >
-        下一页
-      </button>
+      
+      <!-- 新闻列表 -->
+      <div v-else-if="newsList.length > 0" class="news-grid">
+        <NewsCard
+          v-for="news in newsList"
+          :key="news.id"
+          :news="news"
+          @view="handleView"
+          @readMore="handleView"
+        />
+      </div>
+      
+      <!-- 空状态 -->
+      <div v-else class="empty-state">
+        <p>暂无新闻内容</p>
+      </div>
+      
+      <!-- 分页器 -->
+      <div v-if="newsList.length > 0" class="pagination-wrapper">
+        <Pagination
+          :total="totalItems"
+          v-model:currentPage="currentPage"
+          v-model:pageSize="pageSize"
+          @change="handlePageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { newsService, type News } from '../services/newsService';
+import { defineComponent, ref, computed, onMounted, watch, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { newsService } from '../services/newsService';
+import NewsCard from '../components/news/NewsCard.vue';
+import Pagination from '../components/common/Pagination.vue';
+import type { News } from '../components/news/NewsCard.vue';
 
 export default defineComponent({
   name: 'NewsView',
+  components: {
+    NewsCard,
+    Pagination
+  },
   setup() {
     const route = useRoute();
+    const router = useRouter();
     
     // 新闻类别
     const categories = [
       { label: '全部', value: 'all' },
       { label: '协会公告', value: '协会公告' },
       { label: '活动通知', value: '活动通知' },
-      { label: '技术博客', value: '技术分享' },
+      { label: '技术分享', value: '技术分享' },
       { label: '成员风采', value: '成员风采' }
     ];
     
@@ -100,7 +86,11 @@ export default defineComponent({
     const pageSize = ref(9);
     const totalItems = ref(0);
     const currentCategory = ref('all');
-    const currentNewsType = ref<number | null>(null);
+    
+    // 筛选条件
+    const filter = reactive({
+      status: 1  // 默认显示已发布的新闻
+    });
     
     // 计算总页数
     const totalPages = computed(() => {
@@ -113,28 +103,10 @@ export default defineComponent({
       return category ? category.label : '内容';
     };
     
-    // 获取新闻类型标签
-    const getNewsTypeLabel = (type: number) => {
-      switch (type) {
-        case 1:
-          return '通知';
-        case 2:
-          return '博客';
-        default:
-          return '未知';
-      }
-    };
-    
-    // 获取新闻类型CSS类
-    const getNewsTypeClass = (type: number) => {
-      switch (type) {
-        case 1:
-          return 'news-type-notification';
-        case 2:
-          return 'news-type-blog';
-        default:
-          return '';
-      }
+    // 处理筛选条件变化
+    const handleFilterChange = () => {
+      currentPage.value = 1;  // 重置页码
+      loadNews();
     };
     
     // 加载新闻列表
@@ -145,34 +117,137 @@ export default defineComponent({
       try {
         const params: any = {
           page: currentPage.value,
-          pageSize: pageSize.value,
-          status: 1 // 只获取已发布的新闻
+          pageSize: pageSize.value
         };
+        
+        // 添加状态筛选
+        if (filter.status !== -1) {
+          params.status = filter.status;
+        }
         
         // 如果不是全部类别，则添加类别筛选
         if (currentCategory.value !== 'all') {
           params.category = currentCategory.value;
         }
         
-        // 如果指定了新闻类型，则添加类型筛选
-        if (currentNewsType.value !== null) {
-          params.newsType = currentNewsType.value;
-        }
-        
         const response = await newsService.getNewsList(params);
         
         if (response.code === 0) {
-          newsList.value = response.data.list;
+          // 对返回的数据进行处理，确保符合NewsCard组件需要的格式
+          newsList.value = response.data.list.map(item => {
+            // 处理可能为null的字段
+            return {
+              ...item,
+              // 确保NewsCard需要的字段都存在
+              content: item.content || '',
+              title: item.title || '无标题',
+              category: item.category || '未分类',
+              summary: item.summary || (item.content ? getExcerpt(item.content) : '暂无内容'),
+              coverUrl: item.coverUrl || item.coverImage || '',
+              author: item.author || item.authorName || '管理员',
+              publishDate: item.publishDate || item.createdAt || item.createTime || '',
+              isHot: item.isHot || item.isTop === 1,
+              tags: item.tags || [],
+              viewCount: item.viewCount || 0
+            }
+          });
           totalItems.value = response.data.total;
         } else {
           error.value = response.msg || '获取新闻列表失败';
+          
+          // 仅在开发环境或API错误时使用模拟数据
+          if (import.meta.env.DEV || response.code === -1) {
+            newsList.value = getMockData();
+            totalItems.value = newsList.value.length;
+          } else {
+            newsList.value = [];
+            totalItems.value = 0;
+          }
         }
       } catch (err) {
         error.value = '获取新闻列表失败，请稍后重试';
         console.error('加载新闻列表出错:', err);
+        
+        // 仅在开发环境或API错误时使用模拟数据
+        if (import.meta.env.DEV) {
+          newsList.value = getMockData();
+          totalItems.value = newsList.value.length;
+        } else {
+          newsList.value = [];
+          totalItems.value = 0;
+        }
       } finally {
         loading.value = false;
       }
+    };
+    
+    // 生成模拟数据
+    const getMockData = (): News[] => {
+      return [
+        {
+          id: 1,
+          title: '软件实践基地纳新通知',
+          content: '软件实践基地即将开展2024年度纳新活动，欢迎所有对软件开发感兴趣的同学踊跃报名。我们将提供全面的技术培训和项目实践机会，帮助你快速成长为优秀的软件工程师。',
+          summary: '软件实践基地2024年度纳新活动即将开始，提供技术培训和项目实践机会，欢迎报名。',
+          category: '协会公告',
+          newsType: 1,
+          coverImage: 'https://picsum.photos/id/101/800/400',
+          coverUrl: 'https://picsum.photos/id/101/800/400',
+          viewCount: 256,
+          isTop: 1,
+          status: 1,
+          createdAt: '2024-03-10T10:00:00',
+          updatedAt: '2024-03-10T10:00:00',
+          author: '协会管理员',
+          authorName: '协会管理员',
+          publishDate: '2024-03-10T10:00:00',
+          tags: ['纳新', '招募', '软件开发'],
+          isHot: true,
+          severity: 'high'
+        },
+        {
+          id: 2,
+          title: '前端技术分享会：Vue3最佳实践',
+          content: '本次分享会将深入探讨Vue3的Composition API、响应式系统以及性能优化技巧。通过实际案例，帮助你掌握Vue3的核心概念和开发技巧，提升前端开发效率。',
+          summary: '深入探讨Vue3的Composition API、响应式系统及性能优化技巧，通过实例掌握核心概念。',
+          category: '技术分享',
+          newsType: 2,
+          coverImage: 'https://picsum.photos/id/102/800/400',
+          coverUrl: 'https://picsum.photos/id/102/800/400',
+          viewCount: 189,
+          isTop: 0,
+          status: 1,
+          createdAt: '2024-03-05T14:30:00',
+          updatedAt: '2024-03-05T14:30:00',
+          author: '张小明',
+          authorName: '张小明',
+          publishDate: '2024-03-05T14:30:00',
+          tags: ['Vue3', '前端开发', '技术分享'],
+          isHot: true,
+          severity: 'medium'
+        },
+        {
+          id: 3,
+          title: '软件工程实践课程安排',
+          content: '软件工程实践课程将于下周开始，课程安排如下：周一至周三上机实践，周四项目研讨，周五总结汇报。请各位同学提前做好准备，带好个人电脑和相关学习资料。',
+          summary: '软件工程实践课程将于下周开始，包括上机实践、项目研讨和总结汇报，请做好准备。',
+          category: '活动通知',
+          newsType: 1,
+          coverImage: 'https://picsum.photos/id/103/800/400',
+          coverUrl: 'https://picsum.photos/id/103/800/400',
+          viewCount: 321,
+          isTop: 0,
+          status: 1,
+          createdAt: '2024-02-28T09:00:00',
+          updatedAt: '2024-02-28T09:00:00',
+          author: '教务管理员',
+          authorName: '教务管理员',
+          publishDate: '2024-02-28T09:00:00',
+          tags: ['课程安排', '软件工程', '实践课程'],
+          isHot: false,
+          severity: 'normal'
+        }
+      ];
     };
     
     // 切换类别
@@ -180,16 +255,6 @@ export default defineComponent({
       if (currentCategory.value !== category) {
         currentCategory.value = category;
         currentPage.value = 1; // 切换类别时重置页码
-        
-        // 根据类别设置新闻类型
-        if (category === '技术分享') {
-          currentNewsType.value = 2; // 技术博客
-        } else if (category === '协会公告' || category === '活动通知') {
-          currentNewsType.value = 1; // 协会通知
-        } else {
-          currentNewsType.value = null; // 全部类型
-        }
-        
         loadNews();
       }
     };
@@ -200,6 +265,11 @@ export default defineComponent({
         currentPage.value = page;
         loadNews();
       }
+    };
+    
+    // 处理分页器页码变化
+    const handlePageChange = (page: number) => {
+      changePage(page);
     };
     
     // 格式化日期
@@ -216,6 +286,13 @@ export default defineComponent({
       return content.replace(/<[^>]+>/g, '').substring(0, 100) + '...';
     };
     
+    // 查看新闻详情
+    const handleView = (news: News) => {
+      console.log('查看新闻详情:', news);
+      // 跳转到新闻详情页
+      router.push(`/news/detail?newsId=${news.id}`);
+    };
+    
     // 监听路由参数变化
     watch(() => route.query, (newQuery) => {
       // 如果URL中有category参数，则切换到对应类别
@@ -223,21 +300,7 @@ export default defineComponent({
         const category = String(newQuery.category);
         if (categories.some(c => c.value === category)) {
           currentCategory.value = category;
-          
-          // 设置对应的新闻类型
-          if (category === '技术分享') {
-            currentNewsType.value = 2; // 技术博客
-          } else if (category === '协会公告' || category === '活动通知') {
-            currentNewsType.value = 1; // 协会通知
-          } else {
-            currentNewsType.value = null; // 全部类型
-          }
         }
-      }
-      
-      // 如果URL中有newsType参数，则设置对应的新闻类型
-      if (newQuery.newsType) {
-        currentNewsType.value = Number(newQuery.newsType);
       }
       
       loadNews();
@@ -250,27 +313,7 @@ export default defineComponent({
         const category = String(route.query.category);
         if (categories.some(c => c.value === category)) {
           currentCategory.value = category;
-          
-          // 设置对应的新闻类型
-          if (category === '技术分享') {
-            currentNewsType.value = 2; // 技术博客
-          } else if (category === '协会公告' || category === '活动通知') {
-            currentNewsType.value = 1; // 协会通知
-          } else {
-            currentNewsType.value = null; // 全部类型
-          }
         }
-      }
-      
-      // 如果URL中有newsType参数，则设置对应的新闻类型
-      if (route.query.newsType) {
-        currentNewsType.value = Number(route.query.newsType);
-      }
-      
-      // 如果从博客页面跳转过来，默认显示技术博客类别
-      if (route.query.from === 'blog') {
-        currentCategory.value = '技术分享';
-        currentNewsType.value = 2; // 技术博客
       }
       
       loadNews();
@@ -283,15 +326,19 @@ export default defineComponent({
       error,
       currentPage,
       totalPages,
+      totalItems,
+      pageSize,
       currentCategory,
+      filter,
       getCategoryLabel,
-      getNewsTypeLabel,
-      getNewsTypeClass,
       loadNews,
       changeCategory,
       changePage,
+      handlePageChange,
       formatDate,
-      getExcerpt
+      getExcerpt,
+      handleView,
+      handleFilterChange
     };
   },
 });
@@ -302,192 +349,103 @@ export default defineComponent({
   padding: 30px;
   max-width: 1200px;
   margin: 0 auto;
+  text-align: center;
 }
 
 .page-title {
   color: #1e40af;
   margin-bottom: 10px;
   font-size: 2rem;
-  text-align: center;
 }
 
 .page-subtitle {
   color: #6b7280;
-  margin-bottom: 30px;
-  text-align: center;
+  margin-bottom: 20px;
 }
 
-/* 内部导航栏样式 */
-.news-categories {
+/* 筛选区域样式 */
+.news-filters {
   display: flex;
-  justify-content: center;
-  margin-bottom: 30px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 10px;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  padding: 0 20px;
 }
 
-.category-item {
-  padding: 8px 16px;
-  margin: 0 8px;
-  cursor: pointer;
+.filter-item {
+  margin-left: 10px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.category-item:hover {
-  color: #1e40af;
-}
-
-.category-item.active {
-  color: #1e40af;
-  font-weight: 600;
-}
-
-.category-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: #1e40af;
-  border-radius: 3px 3px 0 0;
-}
-
-/* 新闻列表样式 */
-.news-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
-  margin-top: 20px;
-}
-
-.news-card {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.news-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-}
-
-.news-image {
-  height: 180px;
-  background-color: #f3f4f6;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-
-.news-type-tag {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: white;
-}
-
-.news-type-notification {
-  background-color: #1e40af;
-}
-
-.news-type-blog {
-  background-color: #10b981;
+  color: #606266;
+  min-width: 120px;
+  cursor: pointer;
+  outline: none;
 }
 
 .news-content {
-  padding: 20px;
-  flex: 1;
+  padding: 0 20px;
+  min-height: 400px;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+/* 加载状态样式 */
+.loading-state {
   display: flex;
   flex-direction: column;
-}
-
-.news-meta {
-  display: flex;
-  justify-content: space-between;
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 10px;
-}
-
-.news-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-  color: #1f2937;
-}
-
-.news-excerpt {
-  color: #4b5563;
-  margin-bottom: 15px;
-  flex: 1;
-}
-
-.news-footer {
-  display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-top: auto;
-}
-
-.read-more-btn {
-  padding: 6px 12px;
-  background-color: #e0e7ff;
-  color: #1e40af;
-  border-radius: 4px;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-  text-decoration: none;
-}
-
-.read-more-btn:hover {
-  background-color: #c7d2fe;
-}
-
-.news-author {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-/* 加载状态和空状态 */
-.loading-state,
-.empty-state,
-.error-state {
-  text-align: center;
   padding: 50px;
   color: #6b7280;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  margin-top: 20px;
 }
 
-.retry-btn {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background-color: #1e40af;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(30, 64, 175, 0.1);
+  border-radius: 50%;
+  border-top-color: #1e40af;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
 }
 
-/* 分页样式 */
-.pagination {
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 空状态样式 */
+.empty-state {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 40px;
+  background-color: #f9fafb;
+  padding: 50px;
+  border-radius: 8px;
+  color: #4b5563;
+  margin-top: 20px;
+}
+
+/* 分页器样式 */
+.pagination-wrapper {
+  margin-top: 30px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -516,16 +474,22 @@ export default defineComponent({
 
 /* 响应式布局 */
 @media (max-width: 768px) {
-  .news-list {
+  .news-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  .news-filters {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .news-grid {
     grid-template-columns: 1fr;
   }
   
-  .news-categories {
-    flex-wrap: wrap;
-  }
-  
-  .category-item {
-    margin-bottom: 8px;
+  .news-container {
+    padding: 20px 15px;
   }
 }
 </style>

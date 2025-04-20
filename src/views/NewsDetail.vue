@@ -26,7 +26,7 @@
           <div class="news-meta">
             <div class="meta-item">
               <i class="fas fa-calendar"></i>
-              <span>{{ formatDate(newsDetail.createdAt || newsDetail.createTime) }}</span>
+              <span>{{ formatDate(newsDetail.createdAt || newsDetail.createTime || '') }}</span>
             </div>
             <div class="meta-item">
               <i class="fas fa-eye"></i>
@@ -34,7 +34,7 @@
             </div>
             <div v-if="newsDetail.authorName" class="meta-item">
               <i class="fas fa-user"></i>
-              <span>{{ newsDetail.authorName }}</span>
+              <span>{{ newsDetail.authorName || newsDetail.author || '管理员' }}</span>
             </div>
           </div>
         </header>
@@ -47,7 +47,7 @@
         
         <div class="article-footer">
           <div class="update-info">
-            最后更新: {{ formatDate(newsDetail.updatedAt || newsDetail.updateTime) }}
+            最后更新: {{ formatDate(newsDetail.updatedAt || newsDetail.updateTime || '') }}
           </div>
           
           <div class="share-buttons">
@@ -86,7 +86,8 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { newsService, type News } from '../services/newsService';
+import { newsService } from '../services/newsService';
+import type { News } from '../components/news/NewsCard.vue';
 import MarkdownIt from 'markdown-it';
 
 export default defineComponent({
@@ -151,21 +152,32 @@ export default defineComponent({
     // 格式化日期
     const formatDate = (dateStr: string) => {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      try {
+        const date = new Date(dateStr);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      } catch (e) {
+        console.error('日期格式化错误:', e);
+        return '';
+      }
     };
     
     // 格式化内容（支持Markdown）
     const formatContent = (content: string) => {
       if (!content) return '';
       
-      // 如果内容中已经包含HTML标签，则直接返回
-      if (/<[a-z][\s\S]*>/i.test(content)) {
-        return content;
+      try {
+        // 如果内容中已经包含HTML标签，则直接返回
+        if (/<[a-z][\s\S]*>/i.test(content)) {
+          return content;
+        }
+        
+        // 否则按Markdown格式渲染
+        return md.render(content);
+      } catch (e) {
+        console.error('内容格式化错误:', e);
+        return content; // 出错时返回原内容
       }
-      
-      // 否则按Markdown格式渲染
-      return md.render(content);
     };
     
     // 获取新闻类型标签

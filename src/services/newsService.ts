@@ -16,6 +16,14 @@ export interface News {
   authorName?: string; // 用户显示，可能后端不返回
   createTime?: string; // 兼容前端组件属性
   updateTime?: string; // 兼容前端组件属性
+  // NewsCard组件需要的属性
+  summary?: string; // 摘要
+  author?: string; // 作者名
+  publishDate?: string; // 发布日期
+  coverUrl?: string; // 封面URL
+  tags?: string[]; // 标签数组
+  isHot?: boolean; // 是否热门
+  severity?: string; // 重要程度
 }
 
 export interface NewsListResponse {
@@ -37,6 +45,31 @@ export interface NewsDetailResponse {
   data: News;
 }
 
+// 处理从API获取的新闻数据，添加前端组件需要的额外字段
+const processNewsData = (news: News): News => {
+  return {
+    ...news,
+    // 兼容前端组件属性
+    createTime: news.createdAt,
+    updateTime: news.updatedAt,
+    // NewsCard组件需要的属性
+    summary: news.content ? getContentSummary(news.content) : '',
+    author: news.authorName || '管理员',
+    publishDate: news.createdAt,
+    coverUrl: news.coverImage,
+    tags: [],
+    isHot: news.isTop === 1,
+    severity: news.isTop === 1 ? 'high' : 'normal'
+  };
+};
+
+// 从内容中提取摘要
+const getContentSummary = (content: string): string => {
+  // 移除Markdown或HTML标记
+  const plainText = content.replace(/#+\s|<[^>]+>/g, '').replace(/\*\*|\*|\[|\]|\(|\)|\#|\>|\`\`\`|\`/g, '');
+  return plainText.length > 120 ? plainText.substring(0, 120) + '...' : plainText;
+};
+
 export const newsService = {
   // 获取新闻列表
   getNewsList: async (params: {
@@ -44,15 +77,13 @@ export const newsService = {
     pageSize?: number;
     category?: string;
     newsType?: number;
+    status?: number;
   }): Promise<NewsListResponse> => {
     try {
       const response = await apiClient.get<NewsListResponse>('/api/news/v1/list', { params });
-      // 转换并补充一些属性，以便前端组件使用
+      // 处理响应数据，添加前端组件需要的字段
       if (response.data.code === 0 && response.data.data.list) {
-        response.data.data.list.forEach(item => {
-          item.createTime = item.createdAt;
-          item.updateTime = item.updatedAt;
-        });
+        response.data.data.list = response.data.data.list.map(processNewsData);
       }
       return response.data;
     } catch (error) {
@@ -75,10 +106,9 @@ export const newsService = {
   getNewsDetail: async (newsId: number): Promise<NewsDetailResponse> => {
     try {
       const response = await apiClient.get<NewsDetailResponse>(`/api/news/v1/detail/${newsId}`);
-      // 转换属性名以便前端组件使用
+      // 处理响应数据，添加前端组件需要的字段
       if (response.data.code === 0 && response.data.data) {
-        response.data.data.createTime = response.data.data.createdAt;
-        response.data.data.updateTime = response.data.data.updatedAt;
+        response.data.data = processNewsData(response.data.data);
       }
       return response.data;
     } catch (error) {
@@ -104,12 +134,9 @@ export const newsService = {
           newsType: 2 // 2-技术分享
         } 
       });
-      // 转换属性名以便前端组件使用
+      // 处理响应数据，添加前端组件需要的字段
       if (response.data.code === 0 && response.data.data.list) {
-        response.data.data.list.forEach(item => {
-          item.createTime = item.createdAt;
-          item.updateTime = item.updatedAt;
-        });
+        response.data.data.list = response.data.data.list.map(processNewsData);
       }
       return response.data;
     } catch (error) {
@@ -140,12 +167,9 @@ export const newsService = {
           newsType: 1 // 1-协会通知
         } 
       });
-      // 转换属性名以便前端组件使用
+      // 处理响应数据，添加前端组件需要的字段
       if (response.data.code === 0 && response.data.data.list) {
-        response.data.data.list.forEach(item => {
-          item.createTime = item.createdAt;
-          item.updateTime = item.updatedAt;
-        });
+        response.data.data.list = response.data.data.list.map(processNewsData);
       }
       return response.data;
     } catch (error) {

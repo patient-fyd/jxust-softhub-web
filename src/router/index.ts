@@ -55,6 +55,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Activities.vue')
   },
   {
+    path: '/activity/detail',
+    name: 'ActivityDetail',
+    component: () => import('../views/ActivityDetail.vue')
+  },
+  {
     path: '/members',
     name: 'Members',
     component: () => import('../views/Members.vue')
@@ -180,6 +185,16 @@ router.beforeEach((to, from, next) => {
     if (!newsId || newsId === 'undefined' || newsId === 'null' || newsId === 'NaN') {
       console.warn('检测到无效的新闻ID:', newsId);
       next({ name: 'News' }); // 重定向到新闻列表页
+      return;
+    }
+  }
+  
+  // 处理活动详情页面的特殊情况
+  if (to.path === '/activity/detail') {
+    const activityId = to.query.id;
+    if (!activityId || activityId === 'undefined' || activityId === 'null' || activityId === 'NaN') {
+      console.warn('检测到无效的活动ID:', activityId);
+      next({ name: 'Activities' }); // 重定向到活动列表页
       return;
     }
   }
