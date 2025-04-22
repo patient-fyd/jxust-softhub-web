@@ -166,7 +166,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, PropType, computed, watch, onUnmounted } from 'vue';
-import type { Category } from '@/views/Resources.vue';
+import type { Category } from '@/views/resources/Resources.js';
 
 export default defineComponent({
   name: 'UploadResourceModal',

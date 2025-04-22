@@ -54,10 +54,10 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, reactive } from 'vue';
-import ActivityCard from '@/components/activities/ActivityCard.vue';
-import Pagination from '@/components/common/Pagination.vue';
+import ActivityCard from '@/components/activities/ActivityCard.js';
+import Pagination from '@/components/common/Pagination.js';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '../stores/userStore';
+import { useUserStore } from '../../stores/userStore.ts';
 
 // 定义活动类型
 interface Activity {
@@ -73,7 +73,7 @@ interface Activity {
 }
 
 // 使用相对路径直接导入服务
-import apiClient from '../services/api';
+import apiClient from '../../services/api.ts';
 
 // 活动服务
 const activityService = {

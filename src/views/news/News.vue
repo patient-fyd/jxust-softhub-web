@@ -55,10 +55,10 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { newsService } from '../services/newsService';
-import NewsCard from '../components/news/NewsCard.vue';
-import Pagination from '../components/common/Pagination.vue';
-import type { News } from '../components/news/NewsCard.vue';
+import { newsService } from '../../services/newsService.ts';
+import NewsCard from '../../components/news/NewsCard.vue';
+import Pagination from '../../components/common/Pagination.vue';
+import type { News } from '../../components/news/NewsCard.vue';
 
 export default defineComponent({
   name: 'NewsView',

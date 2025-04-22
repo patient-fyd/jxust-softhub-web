@@ -108,8 +108,8 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import apiClient from '../services/api';
-import { useUserStore } from '../stores/userStore';
+import apiClient from '../../services/api.ts';
+import { useUserStore } from '../../stores/userStore.ts';
 
 // 定义活动类型
 interface Activity {

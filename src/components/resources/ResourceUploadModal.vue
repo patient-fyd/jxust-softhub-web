@@ -163,7 +163,7 @@
 import { defineComponent, ref, reactive, computed, PropType, watch } from 'vue';
 import { Plus } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus';
-import type { ResourceCategory } from '@/views/Resources.vue';
+import type { ResourceCategory } from '@/views/resources/Resources.js';
 
 export default defineComponent({
   name: 'ResourceUploadModal',

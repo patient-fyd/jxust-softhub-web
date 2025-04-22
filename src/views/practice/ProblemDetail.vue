@@ -188,10 +188,10 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { problemService } from '../services/ProblemService';
-import type { Problem } from '../services/ProblemService';
-import { globalProblemStatus } from '../services/ProblemService';
-import CodeEditor from '../components/practice/CodeEditor.vue';
+import { problemService } from '../../services/ProblemService.ts';
+import type { Problem } from '../../services/ProblemService.ts';
+import { globalProblemStatus } from '../../services/ProblemService.ts';
+import CodeEditor from '../../components/practice/CodeEditor.vue';
 
 export default defineComponent({
   name: 'ProblemDetailView',

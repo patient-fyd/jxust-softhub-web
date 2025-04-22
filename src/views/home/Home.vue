@@ -24,12 +24,12 @@
 import { defineComponent } from 'vue';
 
 // 导入组件
-import HeroSection from '../components/home/HeroSection.vue';
-import AnnouncementSection from '../components/home/AnnouncementSection.vue';
-import BlogSection from '../components/home/BlogSection.vue';
-import ModulesSection from '../components/home/ModulesSection.vue';
-import AboutSection from '../components/home/AboutSection.vue';
-import InteractionSection from '../components/home/InteractionSection.vue';
+import HeroSection from '../../components/home/HeroSection.vue';
+import AnnouncementSection from '../../components/home/AnnouncementSection.vue';
+import BlogSection from '../../components/home/BlogSection.vue';
+import ModulesSection from '../../components/home/ModulesSection.vue';
+import AboutSection from '../../components/home/AboutSection.vue';
+import InteractionSection from '../../components/home/InteractionSection.vue';
 
 export default defineComponent({
   name: 'HomeView',

@@ -3,7 +3,7 @@
       <div class="info-panel">
         <h2>找回密码</h2>
         <p>请输入您的邮箱地址，我们将发送重置链接</p>
-        <img src="@/assets/security-illustration.svg" alt="忘记密码插图" />
+        <img src="../../assets/security-illustration.svg" alt="忘记密码插图" />
       </div>
       <div class="form-card">
         <h1>忘记密码</h1>

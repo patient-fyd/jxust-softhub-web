@@ -142,7 +142,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { blogService, type Blog } from '../services/blogService';
+import { blogService, type Blog } from '../../services/blogService.ts';
 
 export default defineComponent({
   name: 'BlogView',

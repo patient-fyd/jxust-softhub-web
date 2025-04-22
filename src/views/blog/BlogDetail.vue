@@ -153,7 +153,7 @@
       
       <!-- 评论区 -->
       <div class="comments-section">
-        <h2>评论 ({{ comments.length }})</h2>
+        <h3 class="comments-title">评论区 ({{ mockComments.length }})</h3>
         
         <div class="comment-form">
           <div v-if="!isUserLoggedIn" class="login-prompt">
@@ -165,135 +165,127 @@
               <span class="username">{{ userStore.currentUser?.userName || '用户' }}</span>
             </div>
             <textarea 
-              v-model="commentContent" 
+              v-model="mockCommentContent" 
               placeholder="发表您的评论..." 
               rows="6"
-              :disabled="!isUserLoggedIn"
             ></textarea>
             <div class="form-footer">
               <div class="comment-tips">
                 <span>平等表达，友善交流</span>
               </div>
+              <div class="emoji-picker">
+                <span @click="addEmoji('😊')" class="emoji-item">😊</span>
+                <span @click="addEmoji('👍')" class="emoji-item">👍</span>
+                <span @click="addEmoji('🎉')" class="emoji-item">🎉</span>
+                <span @click="addEmoji('❤️')" class="emoji-item">❤️</span>
+                <span @click="addEmoji('🤔')" class="emoji-item">🤔</span>
+                <span @click="addEmoji('😂')" class="emoji-item">😂</span>
+                <span @click="addEmoji('🚀')" class="emoji-item">🚀</span>
+                <span @click="addEmoji('👏')" class="emoji-item">👏</span>
+                <span @click="addEmoji('🔥')" class="emoji-item">🔥</span>
+                <span @click="addEmoji('🌟')" class="emoji-item">🌟</span>
+                <span @click="addEmoji('😍')" class="emoji-item">😍</span>
+                <span @click="addEmoji('🙏')" class="emoji-item">🙏</span>
+              </div>
               <button 
-                @click="submitComment" 
-                :disabled="!commentContent.trim() || submittingComment || !isUserLoggedIn"
+                @click="submitMockComment" 
+                :disabled="!mockCommentContent.trim() || submittingMockComment"
                 class="submit-button"
               >
-                <span v-if="submittingComment" class="spinner spinner-xs"></span>
-                <span>{{ submittingComment ? '提交中...' : '发送' }}</span>
+                <span v-if="submittingMockComment" class="spinner spinner-xs"></span>
+                <span>{{ submittingMockComment ? '提交中...' : '发送' }}</span>
               </button>
             </div>
           </div>
         </div>
         
-        <div v-if="loadingComments" class="loading-comments">
-          <div class="spinner"></div>
-          <p>加载评论中...</p>
-        </div>
-        
-        <div v-else-if="commentsError" class="comments-error">
-          <p>{{ commentsError }}</p>
-          <button @click="loadComments" class="retry-btn">重试</button>
-        </div>
-        
-        <div v-else-if="comments.length === 0" class="no-comments">
+        <div v-if="mockComments.length === 0" class="no-comments">
           <div class="empty-comments-icon">💬</div>
           <p>暂无评论，来发表第一条评论吧！</p>
         </div>
         
-        <div v-else class="comments-list">
+        <div v-else class="mock-comments-list">
           <div class="comments-sort">
             <span 
               class="sort-label" 
-              :class="{ active: sortMode === 'hot' }"
-              @click="changeSortMode('hot')"
+              :class="{ active: mockSortMode === 'hot' }"
+              @click="changeMockSortMode('hot')"
             >最热</span>
             <span 
               class="sort-label" 
-              :class="{ active: sortMode === 'new' }"
-              @click="changeSortMode('new')"
+              :class="{ active: mockSortMode === 'new' }"
+              @click="changeMockSortMode('new')"
             >最新</span>
           </div>
           
-          <transition-group name="comment-fade" tag="div" class="comments-container">
-            <div v-for="comment in sortedComments" :key="comment.commentId" class="comment-item">
+          <div class="mock-comments-container">
+            <div v-for="comment in sortedMockComments" :key="comment.id" class="mock-comment-item">
               <div class="comment-header">
                 <div class="comment-author-info">
-                  <span class="comment-avatar">{{ (comment.userName || comment.authorName)?.charAt(0) || '用户' }}</span>
-                  <span class="comment-author">{{ comment.userName || comment.authorName }}</span>
+                  <span class="comment-avatar">{{ comment.author.charAt(0) }}</span>
+                  <span class="comment-author">{{ comment.author }}</span>
                 </div>
-                <span class="comment-date">{{ formatDate(comment.createTime) }}</span>
+                <span class="comment-date">{{ comment.date }}</span>
               </div>
               <div class="comment-content">{{ comment.content }}</div>
               <div class="comment-actions">
-                <button @click="replyToComment(comment)" class="action-button reply-button">
+                <button @click="replyToMockComment(comment)" class="action-button reply-button">
                   <Icon icon="material-symbols:reply" class="reply-icon" /> 回复
                 </button>
                 <button 
-                  @click="likeComment(comment)" 
+                  @click="likeMockComment(comment)" 
                   class="action-button like-button" 
-                  :class="{ 'liked': (comment as any).isLiked }"
+                  :class="{ 'liked': comment.isLiked }"
                 >
-                  <Icon :icon="(comment as any).isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="like-icon" />
-                  <span>{{ (comment as any).likes || 0 }}</span>
+                  <Icon :icon="comment.isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="like-icon" />
+                  <span>{{ comment.likes }}</span>
                 </button>
               </div>
               
               <!-- 回复输入框 -->
-              <div v-if="replyingToComment && replyingToComment.commentId === comment.commentId" class="reply-form">
+              <div v-if="replyingToMockComment && replyingToMockComment.id === comment.id" class="reply-form">
                 <textarea 
-                  v-model="replyContent" 
+                  v-model="mockReplyContent" 
                   placeholder="回复评论..." 
-                  rows="2"
+                  rows="3"
                 ></textarea>
                 <div class="reply-form-actions">
-                  <button @click="cancelReply" class="cancel-reply-button">取消</button>
+                  <button @click="cancelMockReply" class="cancel-reply-button">取消</button>
                   <button 
-                    @click="submitReply(comment)" 
-                    :disabled="!replyContent.trim() || submittingReply"
+                    @click="submitMockReply(comment)" 
+                    :disabled="!mockReplyContent.trim() || submittingMockReply"
                     class="submit-reply-button"
                   >
-                    <span v-if="submittingReply" class="spinner spinner-xs"></span>
-                    <span>{{ submittingReply ? '提交中...' : '回复' }}</span>
+                    <span v-if="submittingMockReply" class="spinner spinner-xs"></span>
+                    <span>{{ submittingMockReply ? '提交中...' : '回复' }}</span>
                   </button>
                 </div>
               </div>
               
-              <!-- 嵌套回复 -->
-              <div v-if="comment.children && comment.children.length > 0" class="comment-replies">
-                <div v-for="reply in comment.children" :key="reply.commentId" class="reply-item">
+              <!-- 评论回复 -->
+              <div v-if="comment.replies && comment.replies.length > 0" class="mock-comment-replies">
+                <div v-for="reply in comment.replies" :key="reply.id" class="mock-reply-item">
                   <div class="comment-header">
                     <div class="comment-author-info">
-                      <span class="comment-avatar">{{ (reply.userName || reply.authorName)?.charAt(0) || '用户' }}</span>
-                      <span class="comment-author">{{ reply.userName || reply.authorName }}</span>
+                      <span class="comment-avatar">{{ reply.author.charAt(0) }}</span>
+                      <span class="comment-author">{{ reply.author }}</span>
                     </div>
-                    <span class="comment-date">{{ formatDate(reply.createTime) }}</span>
+                    <span class="comment-date">{{ reply.date }}</span>
                   </div>
                   <div class="comment-content">{{ reply.content }}</div>
                   <div class="comment-actions">
                     <button 
-                      @click="likeComment(reply)" 
+                      @click="likeMockComment(reply)" 
                       class="action-button like-button" 
-                      :class="{ 'liked': (reply as any).isLiked }"
+                      :class="{ 'liked': reply.isLiked }"
                     >
-                      <Icon :icon="(reply as any).isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="like-icon" />
-                      <span>{{ (reply as any).likes || 0 }}</span>
+                      <Icon :icon="reply.isLiked ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'" class="like-icon" />
+                      <span>{{ reply.likes }}</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-          </transition-group>
-          
-          <div v-if="commentsHasMore" class="load-more-comments">
-            <button 
-              @click="loadMoreComments" 
-              :disabled="loadingMoreComments" 
-              class="load-more-button"
-            >
-              <span v-if="loadingMoreComments" class="spinner spinner-xs"></span>
-              <span>{{ loadingMoreComments ? '加载中...' : `查看更多评论 (${totalCommentsCount})` }}</span>
-            </button>
           </div>
         </div>
       </div>
@@ -310,13 +302,16 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { blogService, type Blog, type BlogComment } from '../services/blogService';
-import { useUserStore } from '../stores/userStore';
+import { blogService, type Blog, type BlogComment } from '../../services/blogService.ts';
+import { useUserStore } from '../../stores/userStore.ts';
 import { Icon } from '@iconify/vue';
+// @ts-ignore 忽略类型检查错误
+import Valine from 'valine';
 
 // 导入Markdown-it和插件
 import MarkdownIt from 'markdown-it';
 import MarkdownItPrism from 'markdown-it-prism';
+import Prism from 'prismjs';
 
 // 导入Prism样式
 import 'prismjs/themes/prism.css';
@@ -327,6 +322,13 @@ import 'prismjs/plugins/toolbar/prism-toolbar.css';
 interface ExtendedComment extends BlogComment {
   isLiked?: boolean;
   likes?: number;
+}
+
+// 扩展Window接口以包含Waline
+declare global {
+  interface Window {
+    Waline: any;
+  }
 }
 
 export default defineComponent({
@@ -377,7 +379,20 @@ export default defineComponent({
     });
     
     // 使用markdown-it-prism插件
-    md.use(MarkdownItPrism);
+    // 替换直接使用插件的方式，改为手动创建prism高亮功能
+    // md.use(MarkdownItPrism);
+    
+    // 手动添加代码高亮支持
+    md.options.highlight = (str, lang) => {
+      if (lang && Prism.languages[lang]) {
+        try {
+          return `<pre class="language-${lang}"><code>${Prism.highlight(str, Prism.languages[lang], lang)}</code></pre>`;
+        } catch (e) {
+          console.error('Prism highlighting error:', e);
+        }
+      }
+      return `<pre class="language-${lang || 'text'}"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+    };
     
     // 格式化内容
     const formatContent = (content: string): string => {
@@ -460,15 +475,18 @@ export default defineComponent({
       console.log('开始加载博客详情，blogId:', blogId.value);
       
       try {
-        const response = await blogService.getBlogDetail(Number(blogId.value));
+        const response = await blogService.getBlogById(Number(blogId.value));
         console.log('博客详情API响应:', response);
         
-        if (response.code === 0 && response.data && response.data.blogId) {
+        if (response.code === 0 && response.data) {
           blog.value = response.data;
-          document.title = `${blog.value.title} - 软件技术博客`;
+          document.title = `${blog.value?.title || '博客详情'} - 软件技术博客`;
           // 获取相关内容
           loadComments();
           generateToc();
+          
+          // 在博客数据加载完成后再初始化Waline
+          initWalineComment();
         } else {
           error.value = response.msg || '未找到博客详情';
           console.error('博客详情API返回错误:', response);
@@ -595,7 +613,68 @@ export default defineComponent({
           showShareOptions.value = false;
         }
       });
+      
+      // 加载Waline样式
+      const walineStyle = document.createElement('link');
+      walineStyle.rel = 'stylesheet';
+      walineStyle.href = 'https://unpkg.com/@waline/client@v2/dist/waline.css';
+      document.head.appendChild(walineStyle);
     });
+    
+    // 初始化Waline评论系统
+    const initWalineComment = () => {
+      // 加载Waline之前先检查是否已经加载过
+      if (window.Waline) {
+        console.log('Waline已加载，直接初始化');
+        initWalineInstance();
+        return;
+      }
+      
+      console.log('开始加载Waline脚本');
+      const walineScript = document.createElement('script');
+      walineScript.src = 'https://unpkg.com/@waline/client@v2/dist/waline.js';
+      walineScript.onload = () => {
+        console.log('Waline脚本加载完成');
+        initWalineInstance();
+      };
+      document.head.appendChild(walineScript);
+    };
+    
+    // 初始化Waline实例
+    const initWalineInstance = () => {
+      nextTick(() => {
+        const walineContainer = document.getElementById('waline-container');
+        if (!walineContainer) {
+          console.error('找不到Waline容器元素，初始化失败');
+          return;
+        }
+        
+        // 确保容器是空的，避免重复初始化
+        walineContainer.innerHTML = '';
+        
+        console.log('开始初始化Waline，容器ID:', walineContainer.id);
+        // @ts-ignore
+        window.Waline.init({
+          el: '#waline-container',
+          serverURL: 'https://YOUR_WALINE_SERVER', // ← 请替换成你部署的 Waline 服务地址
+          path: window.location.pathname + '?blogId=' + blogId.value, // 添加blogId确保评论唯一性
+          lang: 'zh-CN',
+          dark: 'auto',
+          login: 'enable',
+          emoji: [
+            'https://unpkg.com/@waline/emojis@1.1.0/weibo',
+            'https://unpkg.com/@waline/emojis@1.1.0/bilibili'
+          ],
+          meta: ['nick', 'mail', 'link'],
+          pageview: true,
+          comment: true,
+          locale: {
+            placeholder: '欢迎评论交流，请文明发言哦~'
+          }
+        });
+        console.log('Waline初始化完成');
+      });
+    };
     
     // 回复评论
     const replyToComment = (comment: BlogComment) => {
@@ -653,7 +732,7 @@ export default defineComponent({
           };
           comments.value = [newComment as BlogComment, ...comments.value];
           commentContent.value = ''; // 清空输入框
-        } else {
+          } else {
           alert(response.msg || '评论提交失败');
           console.error('评论提交API返回错误:', response);
         }
@@ -1156,6 +1235,167 @@ export default defineComponent({
     // 声明观察器变量
     let headingObserver: IntersectionObserver | null = null;
 
+    // 模拟评论系统相关状态
+    const mockComments = ref<any[]>([
+      {
+        id: 1,
+        author: '张三',
+        content: '这篇文章写得非常棒，对我帮助很大！',
+        date: '2024年4月18日',
+        likes: 5,
+        isLiked: false,
+        replies: [
+          {
+            id: 101,
+            author: '李四',
+            content: '完全同意你的观点，我也学到了很多。',
+            date: '2024年4月18日',
+            likes: 2,
+            isLiked: false,
+          }
+        ]
+      },
+      {
+        id: 2,
+        author: '王五',
+        content: '文章讲解得很清晰，图文并茂，让复杂的概念变得简单易懂。',
+        date: '2024年4月17日',
+        likes: 3,
+        isLiked: false,
+        replies: []
+      },
+      {
+        id: 3,
+        author: '赵六',
+        content: '期待更多这样的优质内容！',
+        date: '2024年4月16日',
+        likes: 1,
+        isLiked: false,
+        replies: []
+      }
+    ]);
+    const mockCommentContent = ref('');
+    const submittingMockComment = ref(false);
+    const replyingToMockComment = ref<any>(null);
+    const mockReplyContent = ref('');
+    const submittingMockReply = ref(false);
+    const mockSortMode = ref<'hot' | 'new'>('new');
+    
+    // 添加一些模拟评论的方法
+    
+    // 模拟评论排序
+    const sortedMockComments = computed(() => {
+      if (mockSortMode.value === 'hot') {
+        return [...mockComments.value].sort((a, b) => b.likes - a.likes);
+      } else {
+        // 按时间排序，这里我们假设最新的评论ID最大
+        return [...mockComments.value].sort((a, b) => b.id - a.id);
+      }
+    });
+    
+    // 切换排序模式
+    const changeMockSortMode = (mode: 'hot' | 'new') => {
+      mockSortMode.value = mode;
+    };
+    
+    // 提交评论
+    const submitMockComment = () => {
+      if (!mockCommentContent.value.trim() || submittingMockComment.value) {
+        return;
+      }
+      
+      submittingMockComment.value = true;
+      
+      // 模拟网络延迟
+      setTimeout(() => {
+        const newComment = {
+          id: Date.now(),
+          author: userStore.currentUser?.userName || '匿名用户',
+          content: mockCommentContent.value.trim(),
+          date: new Date().toLocaleDateString('zh-CN', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }),
+          likes: 0,
+          isLiked: false,
+          replies: []
+        };
+        
+        mockComments.value.unshift(newComment);
+        mockCommentContent.value = '';
+        submittingMockComment.value = false;
+      }, 800);
+    };
+    
+    // 回复评论
+    const replyToMockComment = (comment: any) => {
+      if (!isUserLoggedIn.value) {
+        router.push('/login');
+        return;
+      }
+      
+      replyingToMockComment.value = comment;
+      mockReplyContent.value = '';
+    };
+    
+    // 取消回复
+    const cancelMockReply = () => {
+      replyingToMockComment.value = null;
+      mockReplyContent.value = '';
+    };
+    
+    // 提交回复
+    const submitMockReply = (parentComment: any) => {
+      if (!mockReplyContent.value.trim() || submittingMockReply.value) {
+        return;
+      }
+      
+      submittingMockReply.value = true;
+      
+      // 模拟网络延迟
+      setTimeout(() => {
+        const newReply = {
+          id: Date.now(),
+          author: userStore.currentUser?.userName || '匿名用户',
+          content: mockReplyContent.value.trim(),
+          date: new Date().toLocaleDateString('zh-CN', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }),
+          likes: 0,
+          isLiked: false
+        };
+        
+        // 确保父评论有replies数组
+        if (!parentComment.replies) {
+          parentComment.replies = [];
+        }
+        
+        parentComment.replies.push(newReply);
+        replyingToMockComment.value = null;
+        mockReplyContent.value = '';
+        submittingMockReply.value = false;
+      }, 800);
+    };
+    
+    // 点赞评论
+    const likeMockComment = (comment: any) => {
+      if (!isUserLoggedIn.value) {
+        router.push('/login');
+        return;
+      }
+      
+      comment.isLiked = !comment.isLiked;
+      comment.likes += comment.isLiked ? 1 : -1;
+    };
+    
+    // 添加表情
+    const addEmoji = (emoji: string) => {
+      mockCommentContent.value += emoji;
+    };
+
     return {
       blog,
       comments,
@@ -1198,7 +1438,22 @@ export default defineComponent({
       sortedComments,
       totalCommentsCount,
       loadBlogDetail,
-      loadComments
+      loadComments,
+      mockComments,
+      mockCommentContent,
+      submittingMockComment,
+      replyingToMockComment,
+      mockReplyContent,
+      submittingMockReply,
+      mockSortMode,
+      sortedMockComments,
+      changeMockSortMode,
+      submitMockComment,
+      replyToMockComment,
+      cancelMockReply,
+      submitMockReply,
+      likeMockComment,
+      addEmoji
     };
   }
 });
@@ -1868,6 +2123,361 @@ export default defineComponent({
   }
 }
 
+/* 模拟评论区样式 */
+.comments-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+  padding-left: 0.75rem;
+  position: relative;
+}
+
+.comments-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 4px;
+  height: 1.25rem;
+  background-color: #3b82f6;
+  border-radius: 1px;
+}
+
+.comment-form {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 0.75rem;
+  font-size: 1rem;
+}
+
+.username {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.comment-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.comment-tips {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-right: auto;
+}
+
+.emoji-picker {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  max-width: 60%;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+
+.emoji-item {
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: transform 0.2s ease;
+  padding: 0.3rem;
+}
+
+.emoji-item:hover {
+  transform: scale(1.2);
+}
+
+.submit-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.submit-button:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.mock-comments-list {
+  margin-top: 1.5rem;
+}
+
+.comments-sort {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 0.75rem;
+}
+
+.sort-label {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #6b7280;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.sort-label:hover {
+  color: #3b82f6;
+  background-color: #f3f4f6;
+}
+
+.sort-label.active {
+  color: #3b82f6;
+  font-weight: 500;
+  position: relative;
+}
+
+.sort-label.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  background-color: #3b82f6;
+  border-radius: 1.5px;
+}
+
+.mock-comments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.mock-comment-item {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mock-comment-item:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transform: translateY(-2px);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.comment-author-info {
+  display: flex;
+  align-items: center;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.comment-date {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.comment-content {
+  margin-bottom: 1rem;
+  color: #4b5563;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-button {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: #f3f4f6;
+  color: #3b82f6;
+}
+
+.action-button.liked {
+  color: #3b82f6;
+}
+
+.mock-comment-replies {
+  margin-top: 1rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid #e5e7eb;
+}
+
+.mock-reply-item {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  border: 1px solid #f3f4f6;
+}
+
+.mock-reply-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 登录提示 */
+.login-prompt {
+  text-align: center;
+  padding: 1.5rem;
+  color: #6b7280;
+}
+
+.login-link {
+  color: #3b82f6;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.login-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.no-comments {
+  text-align: center;
+  padding: 3rem 0;
+  color: #6b7280;
+}
+
+.empty-comments-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+/* 自定义样式：加载中动画 */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-xs {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+
+@keyframes spin {
+  to {transform: rotate(360deg);}
+}
+
+@media (max-width: 640px) {
+  .form-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .emoji-picker {
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .submit-button {
+    align-self: flex-end;
+  }
+}
 </style>
 
 <style>
@@ -2225,4 +2835,13 @@ pre[class*="language-"].line-numbers {
 .comment-form textarea {
   width: 100%;
   resize: vertical;
+}
+
+/* Waline评论样式优化 */
+#waline-container {
+  --waline-theme-color: #3b82f6;
+  --waline-active-color: #2563eb;
+  --waline-border-color: #f3f4f6;
+  max-width: 100%;
+  margin: 0 auto;
 }

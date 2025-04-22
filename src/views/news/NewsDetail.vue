@@ -86,8 +86,8 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { newsService } from '../services/newsService';
-import type { News } from '../components/news/NewsCard.vue';
+import { newsService } from '../../services/newsService.ts';
+import type { News } from '../../components/news/NewsCard.vue';
 import MarkdownIt from 'markdown-it';
 
 export default defineComponent({

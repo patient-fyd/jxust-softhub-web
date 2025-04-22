@@ -120,11 +120,11 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, onActivated, computed, onUnmounted } from 'vue';
-import ProblemList from '../components/practice/ProblemList.vue';
-import ProblemProgress from '../components/practice/ProblemProgress.vue';
-import { problemService } from '../services/ProblemService';
-import type { Problem } from '../services/ProblemService';
-import { globalProblemStatus } from '../services/ProblemService';
+import ProblemList from '../../components/practice/ProblemList.vue';
+import ProblemProgress from '../../components/practice/ProblemProgress.vue';
+import { problemService } from '../../services/ProblemService.ts';
+import type { Problem } from '../../services/ProblemService.ts';
+import { globalProblemStatus } from '../../services/ProblemService.ts';
 
 export default defineComponent({
   name: 'Practice',

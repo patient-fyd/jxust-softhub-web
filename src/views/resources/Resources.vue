@@ -221,10 +221,10 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
-import ResourceCard from '@/components/resources/ResourceCard.vue';
-import UploadResourceModal from '@/components/resources/UploadResourceModal.vue';
+import ResourceCard from '@/components/resources/ResourceCard.js';
+import UploadResourceModal from '@/components/resources/UploadResourceModal.js';
 import { Icon } from '@iconify/vue';
-import Pagination from '@/components/common/Pagination.vue';
+import Pagination from '@/components/common/Pagination.js';
 
 // 资源类型接口
 export interface Resource {

@@ -3,7 +3,7 @@
       <div class="info-panel">
         <h2>JXUST SoftHub</h2>
         <p>江西应用科技学院 · 软件协会</p>
-        <img src="@/assets/security-illustration.svg" alt="security illustration" />
+        <img src="../../assets/security-illustration.svg" alt="security illustration" />
       </div>
       <div class="login-container">
         <h1>登录账户</h1>
@@ -35,7 +35,7 @@
   <script lang="ts">
   import { defineComponent, ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { useUserStore } from '../stores/userStore';
+  import { useUserStore } from '../../stores/userStore.ts';
   
   export default defineComponent({
     name: 'Login',

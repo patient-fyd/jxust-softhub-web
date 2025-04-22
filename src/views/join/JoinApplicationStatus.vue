@@ -206,10 +206,10 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
-import { getJoinApplicationList, getJoinApplicationDetail } from '../services/joinService';
-import { JoinApplicationDetail } from '../types/join';
-import { useUserStore } from '../stores/userStore';
-import { useJoinStore } from '../stores/joinStore';
+import { getJoinApplicationList, getJoinApplicationDetail } from '../../services/joinService.ts';
+import { JoinApplicationDetail } from '../../types/join.ts';
+import { useUserStore } from '../../stores/userStore.ts';
+import { useJoinStore } from '../../stores/joinStore.ts';
 
 export default defineComponent({
   name: 'JoinApplicationStatus',

@@ -55,7 +55,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, PropType } from 'vue';
-import { Resource, Category } from '@/views/Resources.vue';
+import { Resource, Category } from '@/views/resources/Resources.js';
 import { Icon } from '@iconify/vue';
 
 export default defineComponent({

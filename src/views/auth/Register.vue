@@ -3,7 +3,7 @@
     <div class="info-panel">
       <h2>欢迎加入</h2>
       <p>江西应用科技学院 · 软件协会</p>
-      <img src="@/assets/security-illustration.svg" alt="注册插图" />
+      <img src="../../assets/security-illustration.svg" alt="注册插图" />
     </div>
     <div class="register-container">
       <h1>创建账户</h1>
@@ -43,8 +43,8 @@
 <script lang="ts">
 import { defineComponent, ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '../stores/userStore';
-import type { RegisterRequest } from '../services/userService';
+import { useUserStore } from '../../stores/userStore.ts';
+import type { RegisterRequest } from '../../services/userService.ts';
 
 export default defineComponent({
   name: 'Register',

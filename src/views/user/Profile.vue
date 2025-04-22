@@ -45,7 +45,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { useUserStore } from '../stores/userStore';
+import { useUserStore } from '../../stores/userStore.ts';
 import { Icon } from '@iconify/vue';
 
 export default defineComponent({
