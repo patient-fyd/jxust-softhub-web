@@ -23,4 +23,9 @@ export interface Module {
   title: string;
   description: string;
   link: string;
+  type?: string;
+  hidden?: boolean;
+  isPending?: boolean;
+  isApproved?: boolean;
+  isRejected?: boolean;
 }

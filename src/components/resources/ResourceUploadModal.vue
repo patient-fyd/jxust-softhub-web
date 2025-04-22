@@ -160,10 +160,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, computed, PropType, watch } from 'vue';
+import { defineComponent, ref, reactive, computed, watch } from 'vue';
+import type { PropType } from 'vue';
+import { ElMessage } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus';
-import type { ResourceCategory } from '@/views/resources/Resources.js';
+import type { ResourceCategory } from '../../types/resources';
 
 export default defineComponent({
   name: 'ResourceUploadModal',

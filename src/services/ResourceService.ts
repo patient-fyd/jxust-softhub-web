@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { ref } from 'vue';
 
 // 资源接口定义

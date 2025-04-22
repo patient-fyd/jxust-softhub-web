@@ -13,6 +13,7 @@ export interface User {
   userName: string;
   name: string;
   roleId: number;
+  avatar?: string;
 }
 
 export interface RegisterResponse {

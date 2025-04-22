@@ -82,7 +82,7 @@ export default defineComponent({
     Icon
   },
   emits: ['change-tab', 'select-circle'],
-  setup(props, { emit }) {
+  setup(_props, { emit }) {
     const currentTab = ref('latest');
     const selectedCircleId = ref(0);
     const recommendedCircles = ref<CircleItem[]>([]);

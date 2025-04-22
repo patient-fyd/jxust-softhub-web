@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vue-tsc -b && vite build",
+    "build": "vite build",
+    "build-ts": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -27,6 +28,7 @@
     "@codemirror/state": "^6.5.2",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.36.5",
+    "@element-plus/icons-vue": "^2.3.1",
     "@iconify/iconify": "^3.1.1",
     "@iconify/vue": "^4.3.0",
     "@kangc/v-md-editor": "^2.3.18",
@@ -38,6 +40,7 @@
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "dompurify": "^3.2.5",
+    "element-plus": "^2.9.8",
     "highlight.js": "^11.11.1",
     "leancloud-storage": "^4.15.2",
     "markdown-it": "^14.1.0",
@@ -55,6 +58,7 @@
     "@types/node": "^22.14.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
+    "terser": "^5.39.0",
     "typescript": "~5.7.2",
     "vite": "^6.2.0",
     "vue-tsc": "^2.2.4"

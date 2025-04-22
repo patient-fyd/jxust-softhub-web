@@ -89,7 +89,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, watch } from 'vue';
+import { defineComponent, computed } from 'vue';
 import type { PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Problem } from '../../services/ProblemService';

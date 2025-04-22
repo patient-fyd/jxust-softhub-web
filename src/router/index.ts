@@ -188,7 +188,7 @@ const router = createRouter({
 })
 
 // 全局导航守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   // 处理博客详情页面的特殊情况
   if (to.path === '/blog/detail') {
     const blogId = to.query.blogId;

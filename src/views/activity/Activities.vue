@@ -54,10 +54,10 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, reactive } from 'vue';
-import ActivityCard from '@/components/activities/ActivityCard.js';
-import Pagination from '@/components/common/Pagination.js';
+import ActivityCard from '../../components/activities/ActivityCard.vue';
+import Pagination from '../../components/common/Pagination.vue';
 import { useRouter } from 'vue-router';
-import { useUserStore } from '../../stores/userStore.ts';
+import { useUserStore } from '../../stores/userStore';
 
 // 定义活动类型
 interface Activity {

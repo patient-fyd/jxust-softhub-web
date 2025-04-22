@@ -159,36 +159,36 @@
               <div class="detail-header">
                 <div class="detail-cover">
                   <img
-                    :src="getResourceCover(selectedResource)"
-                    :alt="selectedResource.name"
+                    :src="selectedResource ? getResourceCover(selectedResource) : ''"
+                    :alt="selectedResource?.name || ''"
                     class="cover-image"
                   />
                 </div>
                 <div class="detail-info">
-                  <h1 class="detail-title">{{ selectedResource.name }}</h1>
+                  <h1 class="detail-title">{{ selectedResource?.name || '' }}</h1>
                   <div class="detail-meta">
                     <div class="meta-item">
                       <Icon icon="mdi:folder-outline" />
-                      <span>分类：{{ getCategoryName(selectedResource.categoryId) }}</span>
+                      <span>分类：{{ selectedResource ? getCategoryName(selectedResource.categoryId) : '' }}</span>
                     </div>
                     <div class="meta-item">
                       <Icon icon="mdi:file-outline" />
-                      <span>文件类型：{{ getFileTypeLabel(selectedResource.fileType) }}</span>
+                      <span>文件类型：{{ selectedResource ? getFileTypeLabel(selectedResource.fileType) : '' }}</span>
                     </div>
                     <div class="meta-item">
                       <Icon icon="mdi:download-outline" />
-                      <span>下载次数：{{ selectedResource.downloadCount }}</span>
+                      <span>下载次数：{{ selectedResource?.downloadCount || 0 }}</span>
                     </div>
                     <div class="meta-item">
                       <Icon icon="mdi:account-outline" />
-                      <span>上传者：{{ selectedResource.uploaderName }}</span>
+                      <span>上传者：{{ selectedResource?.uploaderName || '' }}</span>
                     </div>
                     <div class="meta-item">
                       <Icon icon="mdi:clock-outline" />
-                      <span>上传时间：{{ formatDate(selectedResource.uploadTime) }}</span>
+                      <span>上传时间：{{ selectedResource ? formatDate(selectedResource.uploadTime) : '' }}</span>
                     </div>
                   </div>
-                  <div v-if="selectedResource.tags && selectedResource.tags.length > 0" class="detail-tags">
+                  <div v-if="selectedResource?.tags && selectedResource.tags.length > 0" class="detail-tags">
                     <span
                       v-for="tag in selectedResource.tags"
                       :key="tag"
@@ -198,10 +198,10 @@
                     </span>
                   </div>
                   <div class="detail-actions">
-                    <button class="btn btn-primary" @click="downloadResource(selectedResource)">
+                    <button class="btn btn-primary" @click="selectedResource && downloadResource(selectedResource)">
                       <Icon icon="mdi:download" /> 下载资源
                     </button>
-                    <button class="btn btn-default" @click="shareResource(selectedResource)">
+                    <button class="btn btn-default" @click="selectedResource && shareResource(selectedResource)">
                       <Icon icon="mdi:share" /> 分享
                     </button>
                   </div>
@@ -209,7 +209,7 @@
               </div>
               <div class="detail-description">
                 <h4>资源描述</h4>
-                <p>{{ selectedResource.description }}</p>
+                <p>{{ selectedResource?.description || '' }}</p>
               </div>
             </div>
           </div>
@@ -220,31 +220,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
-import ResourceCard from '@/components/resources/ResourceCard.js';
-import UploadResourceModal from '@/components/resources/UploadResourceModal.js';
+import { defineComponent, ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import ResourceCard from '../../components/resources/ResourceCard.vue';
+import UploadResourceModal from '../../components/resources/UploadResourceModal.vue';
 import { Icon } from '@iconify/vue';
-import Pagination from '@/components/common/Pagination.js';
-
-// 资源类型接口
-export interface Resource {
-  id: number;
-  name: string;
-  description: string;
-  categoryId: string;
-  fileType: string;
-  tags: string[];
-  uploaderName: string;
-  uploadTime: string;
-  downloadCount: number;
-  coverUrl?: string;
-}
-
-// 分类接口
-export interface Category {
-  id: string;
-  name: string;
-}
+import Pagination from '../../components/common/Pagination.vue';
+import type { Resource, ResourceCategory } from '../../types/resources';
 
 export default defineComponent({
   name: 'ResourcesPage',
@@ -270,7 +251,7 @@ export default defineComponent({
     });
     
     // 分类列表
-    const categories = ref<Category[]>([
+    const categories = ref<ResourceCategory[]>([
       { id: '1', name: '课程笔记' },
       { id: '2', name: '实验报告' },
       { id: '3', name: '习题解析' },
@@ -448,7 +429,6 @@ export default defineComponent({
         const categoryMap = [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6];
         const categoryId = String(categoryMap[i]);
         
-        const fileTypeOptions = ['pdf', 'doc', 'ppt', 'zip', 'xls', 'code', 'img'];
         const fileTypeMap = ['pdf', 'doc', 'pdf', 'ppt', 'pdf', 'code', 'pdf', 'pdf', 'code', 'pdf', 'pdf', 'doc', 'code', 'doc', 'pdf', 'pdf', 'ppt', 'ppt', 'img', 'pdf', 'doc', 'code', 'doc', 'pdf', 'img', 'xls', 'zip', 'pdf', 'doc', 'pdf'];
         const fileType = fileTypeMap[i];
         

@@ -203,9 +203,11 @@ export default defineComponent({
           activity.value = response.data.data.activity;
           
           // 随机生成报名人数（实际应用中应从API获取）
-          const maxParticipants = activity.value.maxParticipants;
-          const current = Math.floor(Math.random() * (maxParticipants * 0.8));
-          participants.value = { current, max: maxParticipants };
+          if (activity.value) {
+            const maxParticipants = activity.value.maxParticipants;
+            const current = Math.floor(Math.random() * (maxParticipants * 0.8));
+            participants.value = { current, max: maxParticipants };
+          }
         } else {
           error.value = true;
           errorMessage.value = response.data.msg || '获取活动详情失败';

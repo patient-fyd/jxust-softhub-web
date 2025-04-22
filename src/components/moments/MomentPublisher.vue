@@ -33,7 +33,7 @@ import { createMoment } from '../../services/momentService';
 export default defineComponent({
   name: 'MomentPublisher',
   emits: ['moment-published'],
-  setup(props, { emit }) {
+  setup(_props, { emit }) {
     const content = ref('');
     const isSubmitting = ref(false);
     

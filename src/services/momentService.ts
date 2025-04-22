@@ -253,4 +253,8 @@ export const deleteMoment = async (momentId: number) => {
     msg: response.data.msg,
     ...response.data.data
   };
-}; 
+};
+
+export type {
+  Moment
+} from '../types/moment'; 

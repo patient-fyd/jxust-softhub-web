@@ -145,7 +145,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import MarkdownEditor from '@/components/editor/MarkdownEditor.vue';
+import MarkdownEditor from '../../components/editor/MarkdownEditor.vue';
 
 export default defineComponent({
   name: 'ActivityEditor',

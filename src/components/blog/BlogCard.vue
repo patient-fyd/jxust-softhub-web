@@ -3,15 +3,19 @@
     <div class="blog-image" :style="blog.coverImage ? `background-image: url(${blog.coverImage})` : ''"></div>
     <div class="blog-content">
       <div class="blog-meta">
-        <span class="blog-date">{{ formatDate(blog.createTime) }}</span>
+        <span class="blog-date">{{ formatDate(getDateString()) }}</span>
         <span class="blog-views">浏览: {{ blog.viewCount }}</span>
       </div>
       <h2 class="blog-title">{{ blog.title }}</h2>
       <p class="blog-excerpt">{{ getExcerpt(blog.content) }}</p>
       <div class="blog-footer">
         <router-link 
-          v-if="blog.blogId"
-          :to="`/blog/detail?blogId=${blog.blogId}`" 
+          v-if="isBlog"
+          :to="`/blog/detail?blogId=${(blog as Blog).blogId}`" 
+          class="read-more-btn">阅读全文</router-link>
+        <router-link 
+          v-else-if="!isBlog"
+          :to="`/news/detail?id=${(blog as News).id}`" 
           class="read-more-btn">阅读全文</router-link>
         <span v-else class="read-more-btn disabled">暂无详情</span>
         <span v-if="blog.authorName" class="blog-author">作者: {{ blog.authorName }}</span>
@@ -21,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, computed } from 'vue';
 import type { News } from '../../services/newsService';
 import type { Blog } from '../../services/blogService';
 
@@ -34,6 +38,19 @@ export default defineComponent({
     }
   },
   setup(props) {
+    // 判断是否为博客类型
+    const isBlog = computed(() => 'blogId' in props.blog);
+    
+    // 获取日期字符串
+    const getDateString = () => {
+      const blog = props.blog;
+      if (isBlog.value) {
+        return (blog as Blog).createTime || '';
+      } else {
+        return (blog as News).createdAt || '';
+      }
+    };
+    
     // 格式化日期
     const formatDate = (dateStr: string) => {
       if (!dateStr) return '';
@@ -50,6 +67,8 @@ export default defineComponent({
     };
     
     return {
+      isBlog,
+      getDateString,
       formatDate,
       getExcerpt
     };

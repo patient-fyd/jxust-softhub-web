@@ -98,7 +98,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
-import { createMoment } from '@/services/momentService';
+import { createMoment } from '../../services/momentService';
 
 export default defineComponent({
   name: 'PublishMomentDialog',

@@ -127,7 +127,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, PropType } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
+import type { PropType } from 'vue';
 import { Icon } from '@iconify/vue';
 import { getCircleDetail, joinCircle } from '../../services/circleService';
 import type { CircleDetail } from '../../types/circle';

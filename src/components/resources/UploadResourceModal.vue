@@ -165,8 +165,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, PropType, computed, watch, onUnmounted } from 'vue';
-import type { Category } from '@/views/resources/Resources.js';
+import { defineComponent, ref, reactive, computed, watch, onUnmounted } from 'vue';
+import type { PropType } from 'vue';
+import type { ResourceCategory } from '../../types/resources';
 
 export default defineComponent({
   name: 'UploadResourceModal',
@@ -177,7 +178,7 @@ export default defineComponent({
       default: false
     },
     categories: {
-      type: Array as PropType<Category[]>,
+      type: Array as PropType<ResourceCategory[]>,
       required: true
     }
   },

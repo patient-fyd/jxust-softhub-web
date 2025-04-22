@@ -89,7 +89,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, PropType } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
+import type { PropType } from 'vue';
 import { useUserStore } from '../../stores/userStore';
 import { getMomentComments, createComment, deleteMoment } from '../../services/momentService';
 import type { Moment, MomentComment } from '../../types/moment';

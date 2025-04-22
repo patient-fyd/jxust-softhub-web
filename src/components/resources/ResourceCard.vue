@@ -54,8 +54,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, PropType } from 'vue';
-import { Resource, Category } from '@/views/resources/Resources.js';
+import { defineComponent, computed } from 'vue';
+import type { PropType } from 'vue';
+import type { Resource, ResourceCategory } from '../../types/resources';
 import { Icon } from '@iconify/vue';
 
 export default defineComponent({
@@ -71,8 +72,8 @@ export default defineComponent({
       required: true
     },
     categories: {
-      type: Array as PropType<Category[]>,
-      required: true
+      type: Array as PropType<ResourceCategory[]>,
+      default: () => []
     },
     getResourceCover: {
       type: Function,

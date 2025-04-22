@@ -47,7 +47,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, PropType } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
+import type { PropType } from 'vue';
 import { Icon } from '@iconify/vue';
 import { getCircleList, joinCircle } from '../../services/circleService';
 import type { CircleItem } from '../../types/circle';

@@ -29,8 +29,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
-import type { PropType } from 'vue';
+import { defineComponent, computed, onMounted, watch } from 'vue';
 import type { Module } from '../../types/home';
 import { useUserStore } from '../../stores/userStore';
 import { useJoinStore } from '../../stores/joinStore';
@@ -58,7 +57,7 @@ export default defineComponent({
     });
     
     // 基础模块
-    const baseTopModules = [
+    const baseTopModules: Module[] = [
       {
         icon: '📅',
         title: '活动预告',
@@ -146,7 +145,7 @@ export default defineComponent({
     });
 
     // 次级模块
-    const secondaryModules = [
+    const secondaryModules: Module[] = [
       {
         icon: '📝',
         title: '技术博客',

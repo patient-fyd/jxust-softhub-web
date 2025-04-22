@@ -180,11 +180,11 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref, computed, onMounted } from 'vue';
-import { submitJoinApplication } from '../../services/joinService.ts';
-import { JoinApplicationForm } from '../../types/join.ts';
-import { collegeOptions, departmentOptions, gradeOptions } from '../../types/join.ts';
-import { useUserStore } from '../../stores/userStore.ts';
-import { useJoinStore } from '../../stores/joinStore.ts';
+import { submitJoinApplication } from '../../services/joinService';
+import type { JoinApplicationForm } from '../../types/join';
+import { collegeOptions, departmentOptions, gradeOptions } from '../../types/join';
+import { useUserStore } from '../../stores/userStore';
+import { useJoinStore } from '../../stores/joinStore';
 
 export default defineComponent({
   name: 'JoinView',

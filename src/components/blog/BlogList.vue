@@ -2,7 +2,7 @@
   <div class="blog-list">
     <blog-card 
       v-for="blog in blogs" 
-      :key="blog.blogId || blog.id" 
+      :key="getBlogId(blog)" 
       :blog="blog"
     />
   </div>
@@ -24,6 +24,20 @@ export default defineComponent({
       type: Array as () => (Blog | News)[],
       required: true
     }
+  },
+  setup() {
+    // 获取博客唯一ID
+    const getBlogId = (blog: Blog | News): number => {
+      if ('blogId' in blog) {
+        return (blog as Blog).blogId;
+      } else {
+        return (blog as News).id;
+      }
+    };
+    
+    return {
+      getBlogId
+    };
   }
 });
 </script>
