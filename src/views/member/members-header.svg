@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="200" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 定义样式 -->
+  <defs>
+    <linearGradient id="header-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1e40af" />
+    </linearGradient>
+    
+    <pattern id="circle-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="2" fill="white" fill-opacity="0.2"/>
+    </pattern>
+    
+    <filter id="glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="800" height="200" fill="url(#header-gradient)" />
+  <rect width="800" height="200" fill="url(#circle-pattern)" />
+  
+  <!-- 装饰圆形 -->
+  <circle cx="130" cy="50" r="80" fill="#ffffff" fill-opacity="0.03" />
+  <circle cx="650" cy="150" r="100" fill="#ffffff" fill-opacity="0.03" />
+  
+  <!-- 人物头像轮廓群组 - 多个头像交错排列 -->
+  <g>
+    <!-- 第一行头像 -->
+    <g transform="translate(100, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">张</text>
+    </g>
+    
+    <g transform="translate(170, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">李</text>
+    </g>
+    
+    <g transform="translate(240, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">王</text>
+    </g>
+    
+    <g transform="translate(310, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">赵</text>
+    </g>
+    
+    <g transform="translate(380, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">陈</text>
+    </g>
+    
+    <g transform="translate(450, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">杨</text>
+    </g>
+    
+    <g transform="translate(520, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">刘</text>
+    </g>
+    
+    <g transform="translate(590, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">周</text>
+    </g>
+    
+    <g transform="translate(660, 100)">
+      <circle cx="0" cy="0" r="25" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.3" stroke-width="2" />
+      <circle cx="0" cy="0" r="21" fill="none" stroke="white" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="0" y="6" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">吴</text>
+    </g>
+    
+    <!-- 第二行头像 (偏移) -->
+    <g transform="translate(135, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">郑</text>
+    </g>
+    
+    <g transform="translate(205, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">冯</text>
+    </g>
+    
+    <g transform="translate(275, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">朱</text>
+    </g>
+    
+    <g transform="translate(345, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">孙</text>
+    </g>
+    
+    <g transform="translate(415, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">林</text>
+    </g>
+    
+    <g transform="translate(485, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">徐</text>
+    </g>
+    
+    <g transform="translate(555, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">何</text>
+    </g>
+    
+    <g transform="translate(625, 150)">
+      <circle cx="0" cy="0" r="20" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.2" stroke-width="1.5" />
+      <text x="0" y="5" font-family="Arial, sans-serif" font-size="12" fill="white" fill-opacity="0.8" text-anchor="middle">马</text>
+    </g>
+  </g>
+  
+  <!-- 标题 -->
+  <g filter="url(#glow)">
+    <text x="400" y="60" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">协会成员展示</text>
+  </g>
+</svg> 
