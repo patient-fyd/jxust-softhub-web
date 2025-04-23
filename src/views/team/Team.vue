@@ -1,9 +1,9 @@
 <template>
   <div class="team-container">
-    <!-- 页面头部 -->
+    <!-- 页面头部
     <div class="team-header">
       <img src="@/views/team/team-illustration.svg" alt="协会团队" class="team-header-image" />
-    </div>
+    </div> -->
 
     <!-- 团队介绍 -->
     <div class="team-intro">
