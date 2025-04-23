@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="300" viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f4ff" />
+      <stop offset="100%" stop-color="#e0e7ff" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#1e40af" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- 背景矩形 -->
+  <rect width="500" height="300" rx="15" ry="15" fill="url(#bg-gradient)" />
+  
+  <!-- 中心装饰圆 -->
+  <circle cx="250" cy="150" r="100" fill="#1e40af" fill-opacity="0.05" />
+  
+  <!-- 左侧装饰 - 代表使命 -->
+  <g transform="translate(80, 150)">
+    <circle cx="0" cy="0" r="50" fill="#1e40af" fill-opacity="0.1" />
+    <path d="M-25,-25 L25,25 M-25,25 L25,-25" stroke="#1e40af" stroke-width="3" stroke-linecap="round" />
+    <text x="0" y="80" font-family="Arial, sans-serif" font-size="16" fill="#1e40af" text-anchor="middle" font-weight="bold">使命</text>
+    <text x="0" y="100" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="middle">连接与成长</text>
+  </g>
+  
+  <!-- 右侧装饰 - 代表愿景 -->
+  <g transform="translate(420, 150)">
+    <circle cx="0" cy="0" r="50" fill="#1e40af" fill-opacity="0.1" />
+    <path d="M0,-30 L0,30 M-30,0 L30,0" stroke="#1e40af" stroke-width="3" stroke-linecap="round" />
+    <text x="0" y="80" font-family="Arial, sans-serif" font-size="16" fill="#1e40af" text-anchor="middle" font-weight="bold">愿景</text>
+    <text x="0" y="100" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="middle">创新与影响力</text>
+  </g>
+  
+  <!-- 中心图形 -->
+  <g transform="translate(250, 150)" filter="url(#shadow)">
+    <!-- 编程符号 -->
+    <path d="M-40,-10 L-20,10 L-40,30 M40,-10 L20,10 L40,30" stroke="#1e40af" stroke-width="4" stroke-linecap="round" fill="none" />
+    <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5" fill="#1e40af" fill-opacity="0.2" stroke="#1e40af" stroke-width="2" />
+    
+    <!-- 中心连接线 -->
+    <path d="M-80,0 L-30,0 M30,0 L80,0" stroke="#1e40af" stroke-width="2" stroke-dasharray="5,3" />
+  </g>
+  
+  <!-- 顶部标题 -->
+  <text x="250" y="40" font-family="Arial, sans-serif" font-size="20" fill="#1e40af" text-anchor="middle" font-weight="bold">软件协会</text>
+  <text x="250" y="70" font-family="Arial, sans-serif" font-size="16" fill="#4b5563" text-anchor="middle">探索技术，共同成长</text>
+  
+  <!-- 底部装饰 -->
+  <path d="M100,270 Q250,240 400,270" stroke="#1e40af" stroke-width="2" fill="none" stroke-dasharray="3,2" />
+</svg> 

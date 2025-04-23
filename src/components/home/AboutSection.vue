@@ -7,7 +7,7 @@
       <router-link to="/about" class="about-btn">了解更多</router-link>
     </div>
     <div class="about-image">
-      <!-- 这里可以放置协会的照片或插图 -->
+      <img src="@/components/home/about-illustration.svg" alt="软件协会插图" class="about-illustration" />
     </div>
   </div>
 </template>
@@ -61,9 +61,19 @@ export default defineComponent({
 }
 
 .about-image {
-  background-color: #e5e7eb;
+  background-color: transparent;
   border-radius: 8px;
   min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-illustration {
+  width: 100%;
+  height: auto;
+  max-height: 250px;
+  object-fit: contain;
 }
 
 @media (max-width: 992px) {

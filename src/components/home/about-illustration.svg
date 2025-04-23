@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="300" viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景与样式定义 -->
+  <defs>
+    <linearGradient id="background-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dbeafe" />
+      <stop offset="100%" stop-color="#bfdbfe" />
+    </linearGradient>
+    
+    <filter id="soft-shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1e40af" flood-opacity="0.2"/>
+    </filter>
+    
+    <pattern id="dots-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.5" fill="#1e40af" fill-opacity="0.2" />
+    </pattern>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="500" height="300" fill="url(#background-gradient)" rx="15" ry="15" />
+  <rect width="500" height="300" fill="url(#dots-pattern)" rx="15" ry="15" />
+  
+  <!-- 装饰元素 -->
+  <circle cx="50" cy="50" r="100" fill="#1e40af" fill-opacity="0.05" />
+  <circle cx="450" cy="250" r="100" fill="#1e40af" fill-opacity="0.05" />
+  
+  <!-- 中心图形群组 -->
+  <g transform="translate(250, 150)" filter="url(#soft-shadow)">
+    <!-- 电脑显示器 -->
+    <rect x="-120" y="-80" width="240" height="140" rx="5" ry="5" fill="white" stroke="#1e40af" stroke-width="2" />
+    <rect x="-110" y="-70" width="220" height="120" fill="#eff6ff" stroke="#1e40af" stroke-width="1" stroke-opacity="0.5" />
+    
+    <!-- 代码符号 -->
+    <g transform="translate(-80, -40)">
+      <text font-family="monospace" font-size="12" fill="#1e40af">&lt;<tspan fill="#1e4070">div</tspan>&gt;</text>
+    </g>
+    <g transform="translate(-90, -15)">
+      <text font-family="monospace" font-size="12" fill="#1e40af">  &lt;<tspan fill="#1e4070">code</tspan>&gt;</text>
+    </g>
+    <g transform="translate(-70, 10)">
+      <text font-family="monospace" font-size="12" fill="#1e40af">    function() {</text>
+    </g>
+    <g transform="translate(-60, 35)">
+      <text font-family="monospace" font-size="12" fill="#3b82f6">      return <tspan fill="#1e4070">true</tspan>;</text>
+    </g>
+    <g transform="translate(-70, 60)">
+      <text font-family="monospace" font-size="12" fill="#1e40af">    }</text>
+    </g>
+    <g transform="translate(-90, 85)">
+      <text font-family="monospace" font-size="12" fill="#1e40af">  &lt;/<tspan fill="#1e4070">code</tspan>&gt;</text>
+    </g>
+    <g transform="translate(-80, 110)">
+      <text font-family="monospace" font-size="12" fill="#1e40af">&lt;/<tspan fill="#1e4070">div</tspan>&gt;</text>
+    </g>
+    
+    <!-- 显示器支架 -->
+    <rect x="-20" y="60" width="40" height="10" fill="white" stroke="#1e40af" stroke-width="1" />
+    <rect x="-30" y="70" width="60" height="5" fill="white" stroke="#1e40af" stroke-width="1" />
+    <rect x="-40" y="75" width="80" height="5" fill="white" stroke="#1e40af" stroke-width="1" />
+  </g>
+  
+  <!-- 人物轮廓 - 左侧 -->
+  <g transform="translate(50, 120)">
+    <circle cx="0" cy="0" r="15" fill="#1e40af" fill-opacity="0.8" /> <!-- 头部 -->
+    <path d="M0,15 L0,60 M-20,30 L20,30 M0,60 L-15,90 M0,60 L15,90" stroke="#1e40af" stroke-width="3" stroke-linecap="round" /> <!-- 身体和四肢 -->
+  </g>
+  
+  <!-- 人物轮廓 - 右侧 -->
+  <g transform="translate(390, 140)">
+    <circle cx="0" cy="0" r="15" fill="#1e40af" fill-opacity="0.8" /> <!-- 头部 -->
+    <path d="M0,15 L0,60 M-20,30 L20,30 M0,60 L-15,90 M0,60 L15,90" stroke="#1e40af" stroke-width="3" stroke-linecap="round" /> <!-- 身体和四肢 -->
+  </g>
+  
+  <!-- 连接线 -->
+  <path d="M80,100 Q150,80 200,120" stroke="#1e40af" stroke-width="1.5" stroke-dasharray="5,3" fill="none" />
+  <path d="M370,120 Q420,80 500,120" stroke="#1e40af" stroke-width="1.5" stroke-dasharray="5,3" fill="none" />
+  
+  <!-- 底部标签 -->
+  <g transform="translate(250, 280)">
+    <rect x="-100" y="-15" width="200" height="30" rx="15" ry="15" fill="#1e40af" />
+    <text x="0" y="5" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="bold">江西应用科技学院软件协会</text>
+  </g>
+</svg> 
