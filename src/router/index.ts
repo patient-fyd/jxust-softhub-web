@@ -143,42 +143,48 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/about',
     name: 'About',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/about/About.vue')
   },
   {
     path: '/history',
     name: 'History',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/history/History.vue')
   },
   {
     path: '/team',
     name: 'Team',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/team/Team.vue')
   },
   {
     path: '/projects',
     name: 'Projects',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/projects/Projects.vue')
   },
   {
     path: '/gallery',
     name: 'Gallery',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/gallery/Gallery.vue')
   },
   {
     path: '/faq',
     name: 'FAQ',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/faq/FAQ.vue')
   },
   {
     path: '/feedback',
     name: 'Feedback',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/feedback/Feedback.vue')
   },
   {
     path: '/forum',
     name: 'Forum',
-    component: () => import('../views/home/Home.vue')  // 暂时重定向到首页
+    component: () => import('../views/forum/Forum.vue')
+  },
+  // 捕获所有未匹配的路由，导向通用建设中页面
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../views/common/UnderConstruction.vue')
   }
 ]
 
