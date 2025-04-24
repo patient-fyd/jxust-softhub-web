@@ -148,9 +148,9 @@ export default defineComponent({
     const secondaryModules: Module[] = [
       {
         icon: '📝',
-        title: '技术博客',
-        description: '阅读成员分享的技术文章和经验',
-        link: '/blog'
+        title: '项目展示',
+        description: '查看协会历年开发的项目',
+        link: '/projects'
       },
       {
         icon: '📚',
